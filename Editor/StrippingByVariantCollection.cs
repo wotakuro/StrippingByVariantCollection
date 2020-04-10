@@ -32,6 +32,13 @@ public class StrippingByVariantCollection : IPreprocessShaders
 {
     private List<ShaderVariantsInfo> shaderVariants;
 
+    private class SortShaderKeyword : IComparer<ShaderKeyword>
+    {
+        public int Compare(ShaderKeyword x, ShaderKeyword y)
+        {
+            return x.GetKeywordName().CompareTo(y.GetKeywordName());
+        }
+    }
 
     public struct ShaderVariantsInfo
     {
@@ -427,13 +434,19 @@ public class StrippingByVariantCollection : IPreprocessShaders
 
         var keywords = compilerData.shaderKeywordSet.GetShaderKeywords();
 
+        var sortKeywords = new ShaderKeyword[keywords.Length];
+        for( int i = 0; i < keywords.Length; ++i)
+        {
+            sortKeywords[i] = keywords[i];
+        }
+        System.Array.Sort(sortKeywords, new SortShaderKeyword());
         sb.Append(" Keyword:");
-        foreach (var keyword in keywords)
+        foreach (var keyword in sortKeywords)
         {
             sb.Append(keyword.GetKeywordName()).Append(" ");
         }
         sb.Append("\n KeywordType:");
-        foreach (var keyword in keywords)
+        foreach (var keyword in sortKeywords)
         {
             sb.Append(keyword.GetKeywordType()).Append(" ");
         }
