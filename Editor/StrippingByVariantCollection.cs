@@ -38,9 +38,11 @@ public class StrippingByVariantCollection : IPreprocessShaders
         public Shader shader;
         public PassType passType;
         public string[] keywords;
-        public ShaderKeyword[] keywordInfos;
+        private ShaderKeyword[] keywordInfos;
 
-        public ShaderVariantsInfo(Shader sh, PassType pass, params string[] words)
+        public List<string> keywordsForCheck;
+
+        public ShaderVariantsInfo(Shader sh, PassType pass, string[] words)
         {
             this.shader = sh;
             this.passType = pass;
@@ -54,10 +56,16 @@ public class StrippingByVariantCollection : IPreprocessShaders
                 keywordInfos[i] = new ShaderKeyword(words[i]);
 #endif
             }
-        }
-
-        public bool IsMatch(ShaderKeyword[] keywords){
-            return false;
+            keywordsForCheck = new List<string>();
+            foreach( var keywordInfo in keywordInfos)
+            {
+                keywordsForCheck.Add(keywordInfo.GetKeywordName());
+                /*
+                if ( keywordInfo.GetKeywordType() != ShaderKeywordType.BuiltinAutoStripped ){
+                }
+                */
+            }
+            keywordsForCheck.Sort();
         }
     }
 
@@ -166,22 +174,21 @@ public class StrippingByVariantCollection : IPreprocessShaders
             var variantProp = variantsProp.GetArrayElementAtIndex(i);
             var keywords = variantProp.FindPropertyRelative("keywords").stringValue;
             var passType = variantProp.FindPropertyRelative("passType").intValue;
-            ShaderVariantsInfo variant = new ShaderVariantsInfo();
-            variant.shader = shader;
 
+            string[] keywordsArray = null;
             if (keywords != null)
             {
                 keywords = keywords.Trim();
             }
             if (string.IsNullOrEmpty(keywords))
             {
-                variant.keywords = new string[] { "" };
+                keywordsArray = new string[] { "" };
             }
             else
             {
-                variant.keywords = keywords.Split(' ');
+                keywordsArray = keywords.Split(' ');
             }
-            variant.passType = (PassType)passType;
+            ShaderVariantsInfo variant = new ShaderVariantsInfo(shader, (PassType)passType, keywordsArray);
             shaderVariants.Add(variant);
         }
     }
@@ -205,7 +212,7 @@ public class StrippingByVariantCollection : IPreprocessShaders
         var keywords = data.shaderKeywordSet.GetShaderKeywords();
         var compiledKeyword = Convert(keywords);
 
-        if (compiledKeyword.Length == 0)
+        if (compiledKeyword.Count == 0)
         {
             return true;
         }
@@ -219,8 +226,7 @@ public class StrippingByVariantCollection : IPreprocessShaders
             {
                 continue;
             }
-            System.Array.Sort(variant.keywords);
-            if (IsMatch(variant.keywords, compiledKeyword))
+            if (IsMatch(variant.keywordsForCheck, compiledKeyword))
             {
                 return true;
             }
@@ -228,25 +234,24 @@ public class StrippingByVariantCollection : IPreprocessShaders
         return false;
     }
 
-    private bool IsMatch(string[] a, string[] b)
+    private bool IsMatch(List<string> a, List<string> b)
     {
-        if (a.Length != b.Length) { return false; }
+        if (a.Count != b.Count) { return false; }
 
-        for (int i = 0; i < a.Length; ++i)
+        for (int i = 0; i < a.Count; ++i)
         {
             if (a[i] != b[i]) { return false; }
         }
         return true;
     }
-    private string[] Convert(ShaderKeyword[] keywords)
+    private List<string> Convert(ShaderKeyword[] keywords)
     {
-        string[] converted = new string[keywords.Length];
-        for (int i = 0; i < converted.Length; ++i)
+        List<string> converted = new List<string>(keywords.Length);
+        for (int i = 0; i < keywords.Length; ++i)
         {
-            converted[i] = keywords[i].GetKeywordName();
+            converted.Add( keywords[i].GetKeywordName() );
         }
-
-        System.Array.Sort(converted);
+        converted.Sort();
         return converted;
     }
 
