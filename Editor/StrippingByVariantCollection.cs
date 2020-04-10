@@ -38,7 +38,7 @@ public class StrippingByVariantCollection : IPreprocessShaders
         public Shader shader;
         public PassType passType;
         public string[] keywords;
-        private ShaderKeyword[] keywordInfos;
+        private List<ShaderKeyword> keywordInfos;
 
         public List<string> keywordsForCheck;
 
@@ -47,23 +47,26 @@ public class StrippingByVariantCollection : IPreprocessShaders
             this.shader = sh;
             this.passType = pass;
             this.keywords = words;
-            this.keywordInfos = new ShaderKeyword[words.Length];
-            for( int i = 0; i < keywordInfos.Length; ++i)
+            this.keywordInfos = new List<ShaderKeyword>(words.Length);
+            for( int i = 0; i < words.Length; ++i)
             {
+                if (string.IsNullOrEmpty(words[i]) ) { continue; }
+                ShaderKeyword shKeyword = null;
 #if UNITY_2019_OR_NEWER
-                keywordInfos[i] = new ShaderKeyword(sh,words[i]);
+                shKeyword = new ShaderKeyword(sh,words[i]);
+                keywordInfos.Add(  new ShaderKeyword(sh,words[i]) );
 #else
-                keywordInfos[i] = new ShaderKeyword(words[i]);
+                shKeyword = new ShaderKeyword(words[i]);
 #endif
+                keywordInfos.Add(shKeyword);
             }
             keywordsForCheck = new List<string>();
             foreach( var keywordInfo in keywordInfos)
             {
-                keywordsForCheck.Add(keywordInfo.GetKeywordName());
-                /*
-                if ( keywordInfo.GetKeywordType() != ShaderKeywordType.BuiltinAutoStripped ){
+                if ( !string.IsNullOrEmpty(keywordInfo.GetKeywordName()) && 
+                    keywordInfo.GetKeywordType() != ShaderKeywordType.BuiltinAutoStripped ){
+                    keywordsForCheck.Add(keywordInfo.GetKeywordName());
                 }
-                */
             }
             keywordsForCheck.Sort();
         }
@@ -249,7 +252,11 @@ public class StrippingByVariantCollection : IPreprocessShaders
         List<string> converted = new List<string>(keywords.Length);
         for (int i = 0; i < keywords.Length; ++i)
         {
-            converted.Add( keywords[i].GetKeywordName() );
+            if (!string.IsNullOrEmpty(keywords[i].GetKeywordName()) &&
+                keywords[i].GetKeywordType() != ShaderKeywordType.BuiltinAutoStripped)
+            {
+                converted.Add(keywords[i].GetKeywordName());
+            }
         }
         converted.Sort();
         return converted;
