@@ -58,12 +58,10 @@ public class StrippingByVariantCollection : IPreprocessShaders
             for( int i = 0; i < words.Length; ++i)
             {
                 if (string.IsNullOrEmpty(words[i]) ) { continue; }
-                ShaderKeyword shKeyword = null;
-#if UNITY_2019_OR_NEWER
-                shKeyword = new ShaderKeyword(sh,words[i]);
-                keywordInfos.Add(  new ShaderKeyword(sh,words[i]) );
+#if UNITY_2019 || UNITY_2019_3_OR_NEWER
+                ShaderKeyword shKeyword = new ShaderKeyword(sh,words[i]);
 #else
-                shKeyword = new ShaderKeyword(words[i]);
+                ShaderKeyword shKeyword = new ShaderKeyword(words[i]);
 #endif
                 keywordInfos.Add(shKeyword);
             }
