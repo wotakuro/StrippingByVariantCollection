@@ -100,7 +100,7 @@ namespace UTJ
         }
 
 #if DEBUG_LOG_STRIPPING_VARIANT
-        private const string SaveDirectory = "ShaderVariants";
+        private const string SaveDirectory = "ShaderVariants/Builds";
 
         private string dateTimeStr;
 
