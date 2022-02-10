@@ -31,9 +31,11 @@ namespace UTJ
 {
     public class StrippingByVariantCollection : IPreprocessShaders
     {
-        private bool isInitialized = false;
         private static StrippingByVariantCollection instance;
+
+        private bool isInitialized = false;
         private List<ShaderVariantsInfo> shaderVariants;
+        private List<ShaderCompilerData> compileResultBuffer;
 
         private class SortShaderKeyword : IComparer<ShaderKeyword>
         {
@@ -82,52 +84,8 @@ namespace UTJ
                 keywordsForCheck.Sort();
             }
         }
-        
-        private const string SaveDirectory = "ShaderVariants/Builds";
 
-        private string dateTimeStr;
 
-        private StringBuilder includeVariantsBuffer;
-        private StringBuilder excludeVariantsBuffer;
-        private StringBuilder shaderKeywordBuffer0;
-        private StringBuilder shaderKeywordBuffer1;
-        private StringBuilder projectVaritantsBuffer;
-
-        private struct ShaderInfoData
-        {
-            public Shader shader;
-            public ShaderSnippetData snippetData;
-
-            public ShaderInfoData(Shader sh, ShaderSnippetData data)
-            {
-                this.shader = sh;
-                this.snippetData = data;
-            }
-            public override int GetHashCode()
-            {
-                return this.shader.name.GetHashCode() + this.snippetData.passName.GetHashCode() +
-                    this.snippetData.passType.GetHashCode() + this.snippetData.shaderType.GetHashCode();
-            }
-
-            public override bool Equals(object obj)
-            {
-                ShaderInfoData data = (ShaderInfoData)obj;
-                if (data.shader != this.shader)
-                {
-                    return false;
-                }
-                if (this.snippetData.passName == data.snippetData.passName &&
-                   this.snippetData.passType == data.snippetData.passType &&
-                   this.snippetData.shaderType == data.snippetData.shaderType)
-                {
-                    return true;
-                }
-
-                return false;
-            }
-        }
-
-        private HashSet<ShaderInfoData> alreadyWriteShader = new HashSet<ShaderInfoData>();
 
 
         public StrippingByVariantCollection()
@@ -148,7 +106,8 @@ namespace UTJ
         {
             if (isInitialized) { return; }
             var variantCollections = GetProjectShaderVariantCollections();
-            this.shaderVariants = new List<ShaderVariantsInfo>();
+            this.compileResultBuffer = new List<ShaderCompilerData>(1024);
+            this.shaderVariants = new List<ShaderVariantsInfo>(1024);
             foreach (var variantCollection in variantCollections)
             {
                 CollectVariants(this.shaderVariants, variantCollection);
@@ -294,7 +253,11 @@ namespace UTJ
 
         public void OnProcessShader(Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> shaderCompilerData)
         {
-            
+
+            if (StripShaderConfig.IsEnable)
+            {
+                return;
+            }
             double startTime = EditorApplication.timeSinceStartup;
             int startVariants = shaderCompilerData.Count;
 
@@ -302,41 +265,57 @@ namespace UTJ
             
             this.includeVariantsBuffer.Length = 0;
             this.excludeVariantsBuffer.Length = 0;
+
             bool isExistShader = IsExistShader(this.shaderVariants, shader);
+            if (isExistShader)
+            {
+                if (StripShaderConfig.IsLogEnable)
+                {
+                    LogNotInVariantColllection(shader, snippet, shaderCompilerData);
+                }
+                if (StripShaderConfig.RemoveAllFromNoCollectedShader)
+                {
+                    shaderCompilerData.Clear();
+                }
+                return;
+            }
+
+            this.compileResultBuffer.Clear();
             for (int i = 0; i < shaderCompilerData.Count; ++i)
             {
-                bool shouldRemove = false;
-                if ( StripShaderConfig.IsEnable)
-                {
-                    bool isExistsVariant = IsExist(this.shaderVariants, shader, snippet, shaderCompilerData[i]);
-                    shouldRemove = !isExistsVariant;
-                }
+                bool isExistsVariant = IsExist(this.shaderVariants, shader, snippet, shaderCompilerData[i]);
 
                 if (StripShaderConfig.IsLogEnable)
                 {
-                    if (shouldRemove)
-                    {
-                        AppendShaderInfo(excludeVariantsBuffer, shader, snippet, shaderCompilerData[i]);
-                    }
-                    else
+                    if (isExistsVariant)
                     {
                         AppendShaderInfo(includeVariantsBuffer, shader, snippet, shaderCompilerData[i]);
                     }
+                    else
+                    {
+                        AppendShaderInfo(excludeVariantsBuffer, shader, snippet, shaderCompilerData[i]);
+                    }
                 }
 
-                if (shouldRemove)
+                if (isExistsVariant)
                 {
-                    shaderCompilerData.RemoveAt(i);
-                    --i;
+                    this.compileResultBuffer.Add(shaderCompilerData[i]);
                 }
             }
+
+            shaderCompilerData.Clear();
+            foreach (var data in this.compileResultBuffer)
+            {
+                shaderCompilerData.Add(data);
+            }
+
             if (StripShaderConfig.IsLogEnable)
             {
 
                 double endTime = EditorApplication.timeSinceStartup;
                 int endVariants = shaderCompilerData.Count;
 
-                string dir = SaveDirectory + "/" + dateTimeStr;
+                string dir = LogDirectory + "/" + dateTimeStr;
                 if (!System.IO.Directory.Exists(dir))
                 {
                     System.IO.Directory.CreateDirectory(dir);
@@ -354,7 +333,57 @@ namespace UTJ
             }
         }
 
+        private void LogNotInVariantColllection(Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> shaderCompilerData)
+        {
+
+        }
+
         #region LOGGING
+        private const string LogDirectory = "ShaderVariants/Builds";
+
+        private string dateTimeStr;
+
+        private StringBuilder includeVariantsBuffer;
+        private StringBuilder excludeVariantsBuffer;
+        private StringBuilder shaderKeywordBuffer0;
+        private StringBuilder shaderKeywordBuffer1;
+        private StringBuilder projectVaritantsBuffer;
+
+        private struct ShaderInfoData
+        {
+            public Shader shader;
+            public ShaderSnippetData snippetData;
+
+            public ShaderInfoData(Shader sh, ShaderSnippetData data)
+            {
+                this.shader = sh;
+                this.snippetData = data;
+            }
+            public override int GetHashCode()
+            {
+                return this.shader.name.GetHashCode() + this.snippetData.passName.GetHashCode() +
+                    this.snippetData.passType.GetHashCode() + this.snippetData.shaderType.GetHashCode();
+            }
+
+            public override bool Equals(object obj)
+            {
+                ShaderInfoData data = (ShaderInfoData)obj;
+                if (data.shader != this.shader)
+                {
+                    return false;
+                }
+                if (this.snippetData.passName == data.snippetData.passName &&
+                   this.snippetData.passType == data.snippetData.passType &&
+                   this.snippetData.shaderType == data.snippetData.shaderType)
+                {
+                    return true;
+                }
+
+                return false;
+            }
+        }
+
+        private HashSet<ShaderInfoData> alreadyWriteShader = new HashSet<ShaderInfoData>();
 
         private void InitLogInfo()
         {
@@ -426,7 +455,7 @@ namespace UTJ
                 projectVaritantsBuffer.Append("\n\n");
             }
 
-            string dir = SaveDirectory + "/" + dateTimeStr;
+            string dir = LogDirectory + "/" + dateTimeStr;
             if (!System.IO.Directory.Exists(dir))
             {
                 System.IO.Directory.CreateDirectory(dir);
@@ -437,8 +466,8 @@ namespace UTJ
         private void SaveResult(Shader shader, ShaderSnippetData snippet)
         {
             string shaderName = shader.name.Replace("/", "_");
-            string includeDir = SaveDirectory + "/" + dateTimeStr + "/Include/" + shaderName;
-            string excludeDir = SaveDirectory + "/" + dateTimeStr + "/Exclude/" + shaderName;
+            string includeDir = LogDirectory + "/" + dateTimeStr + "/Include/" + shaderName;
+            string excludeDir = LogDirectory + "/" + dateTimeStr + "/Exclude/" + shaderName;
             string name = shaderName + "_" + snippet.shaderType.ToString() + "_" + snippet.passName + "_" + snippet.passType;
 
             if (includeVariantsBuffer.Length != 0)
@@ -447,7 +476,8 @@ namespace UTJ
                 {
                     System.IO.Directory.CreateDirectory(includeDir);
                 }
-                System.IO.File.WriteAllText(System.IO.Path.Combine(includeDir, name) + ".txt", includeVariantsBuffer.ToString());
+                this.includeVariantsBuffer.Append("\n==================\n");
+                System.IO.File.AppendAllText(System.IO.Path.Combine(includeDir, name) + ".txt", includeVariantsBuffer.ToString());
             }
             if (excludeVariantsBuffer.Length != 0)
             {
@@ -455,7 +485,8 @@ namespace UTJ
                 {
                     System.IO.Directory.CreateDirectory(excludeDir);
                 }
-                System.IO.File.WriteAllText(System.IO.Path.Combine(excludeDir, name) + ".txt", excludeVariantsBuffer.ToString());
+                this.excludeVariantsBuffer.Append("\n==================\n");
+                System.IO.File.AppendAllText(System.IO.Path.Combine(excludeDir, name) + ".txt", excludeVariantsBuffer.ToString());
             }
         }
 
@@ -480,29 +511,19 @@ namespace UTJ
             sb.Append(" Keyword:");
             foreach (var keyword in sortKeywords)
             {
-#if UNITY_2019_3_OR_NEWER
                 sb.Append( ShaderKeyword.GetKeywordName(shader,keyword)).Append(" ");
-#else
-                sb.Append(keyword.GetKeywordName()).Append(" ");
-#endif
             }
 
             sb.Append("\n KeywordType:");
             foreach (var keyword in sortKeywords)
             {
-#if UNITY_2019_3_OR_NEWER
                 sb.Append(ShaderKeyword.GetKeywordType(shader, keyword)).Append(" ");
-#else
-                sb.Append(keyword.GetKeywordType()).Append(" ");
-#endif
             }
-#if UNITY_2019_3_OR_NEWER
             sb.Append("\n IsLocalkeyword:");
             foreach (var keyword in sortKeywords)
             {
                 sb.Append(ShaderKeyword.IsKeywordLocal(keyword)).Append(" ");
             }
-#endif
             sb.Append("\n").Append("\n");
         }
 
