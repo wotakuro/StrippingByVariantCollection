@@ -45,11 +45,7 @@ namespace UTJ
 
             public int Compare(ShaderKeyword x, ShaderKeyword y)
             {
-#if UNITY_2019_3_OR_NEWER
                 return ShaderKeyword.GetKeywordName(shader,x).CompareTo(ShaderKeyword.GetKeywordName(shader, y));
-#else
-                return x.GetKeywordName().CompareTo(y.GetKeywordName());
-#endif
             }
         }
 
@@ -71,35 +67,22 @@ namespace UTJ
                 for (int i = 0; i < words.Length; ++i)
                 {
                     if (string.IsNullOrEmpty(words[i])) { continue; }
-#if UNITY_2019 || UNITY_2019_3_OR_NEWER
                     ShaderKeyword shKeyword = new ShaderKeyword(sh, words[i]);
-#else
-                ShaderKeyword shKeyword = new ShaderKeyword(words[i]);
-#endif
                     keywordInfos.Add(shKeyword);
                 }
                 keywordsForCheck = new List<string>();
                 foreach (var keywordInfo in keywordInfos)
                 {
-#if UNITY_2019_3_OR_NEWER
                     if (!string.IsNullOrEmpty( ShaderKeyword.GetKeywordName(sh, keywordInfo)) &&
-                        ShaderKeyword.GetKeywordType( sh,keywordInfo) != ShaderKeywordType.BuiltinAutoStripped)
+                        ShaderKeyword.GetKeywordType( sh,keywordInfo) != ShaderKeywordType.BuiltinDefault)
                     {
                         keywordsForCheck.Add( ShaderKeyword.GetKeywordName(sh, keywordInfo) );
                     }
-#else
-                    if (!string.IsNullOrEmpty(keywordInfo.GetKeywordName()) &&
-                        keywordInfo.GetKeywordType() != ShaderKeywordType.BuiltinAutoStripped)
-                    {
-                        keywordsForCheck.Add(keywordInfo.GetKeywordName());
-                    }
-#endif
                 }
                 keywordsForCheck.Sort();
             }
         }
-
-#if DEBUG_LOG_STRIPPING_VARIANT
+        
         private const string SaveDirectory = "ShaderVariants/Builds";
 
         private string dateTimeStr;
@@ -145,7 +128,7 @@ namespace UTJ
         }
 
         private HashSet<ShaderInfoData> alreadyWriteShader = new HashSet<ShaderInfoData>();
-#endif
+
 
         public StrippingByVariantCollection()
         {
@@ -170,10 +153,11 @@ namespace UTJ
             {
                 CollectVariants(this.shaderVariants, variantCollection);
             }
-#if DEBUG_LOG_STRIPPING_VARIANT
-            this.InitLogInfo();
-            this.SaveProjectVaraiants();
-#endif
+            if (StripShaderConfig.IsLogEnable)
+            {
+                this.InitLogInfo();
+                this.SaveProjectVaraiants();
+            }
             isInitialized = true;
         }
 
@@ -290,19 +274,11 @@ namespace UTJ
             List<string> converted = new List<string>(keywords.Length);
             for (int i = 0; i < keywords.Length; ++i)
             {
-#if UNITY_2019_3_OR_NEWER
                 if (!string.IsNullOrEmpty( ShaderKeyword.GetKeywordName(shader, keywords[i]) ) &&
-                    ShaderKeyword.GetKeywordType(shader,keywords[i]) != ShaderKeywordType.BuiltinAutoStripped)
+                    ShaderKeyword.GetKeywordType(shader,keywords[i]) != ShaderKeywordType.BuiltinDefault)
                 {
                     converted.Add(ShaderKeyword.GetKeywordName(shader, keywords[i]));
                 }
-#else
-                if (!string.IsNullOrEmpty(keywords[i].GetKeywordName()) &&
-                    keywords[i].GetKeywordType() != ShaderKeywordType.BuiltinAutoStripped)
-                {
-                    converted.Add(keywords[i].GetKeywordName());
-                }
-#endif
             }
             converted.Sort();
             return converted;
@@ -312,37 +288,41 @@ namespace UTJ
         {
             get
             {
-                return int.MaxValue;
+                return StripShaderConfig.Order;
             }
         }
 
         public void OnProcessShader(Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> shaderCompilerData)
         {
-            this.Initialize();
+            
+            double startTime = EditorApplication.timeSinceStartup;
+            int startVariants = shaderCompilerData.Count;
 
-#if DEBUG_LOG_STRIPPING_VARIANT
+            this.Initialize();
+            
             this.includeVariantsBuffer.Length = 0;
             this.excludeVariantsBuffer.Length = 0;
-#endif
             bool isExistShader = IsExistShader(this.shaderVariants, shader);
             for (int i = 0; i < shaderCompilerData.Count; ++i)
             {
                 bool shouldRemove = false;
-                if (isExistShader && StripEnableChecker.IsEnable)
+                if ( StripShaderConfig.IsEnable)
                 {
                     bool isExistsVariant = IsExist(this.shaderVariants, shader, snippet, shaderCompilerData[i]);
                     shouldRemove = !isExistsVariant;
                 }
-#if DEBUG_LOG_STRIPPING_VARIANT
-                if (shouldRemove)
+
+                if (StripShaderConfig.IsLogEnable)
                 {
-                    AppendShaderInfo(excludeVariantsBuffer, shader, snippet, shaderCompilerData[i]);
+                    if (shouldRemove)
+                    {
+                        AppendShaderInfo(excludeVariantsBuffer, shader, snippet, shaderCompilerData[i]);
+                    }
+                    else
+                    {
+                        AppendShaderInfo(includeVariantsBuffer, shader, snippet, shaderCompilerData[i]);
+                    }
                 }
-                else
-                {
-                    AppendShaderInfo(includeVariantsBuffer, shader, snippet, shaderCompilerData[i]);
-                }
-#endif
 
                 if (shouldRemove)
                 {
@@ -350,21 +330,31 @@ namespace UTJ
                     --i;
                 }
             }
-#if DEBUG_LOG_STRIPPING_VARIANT
-            var data = new ShaderInfoData(shader, snippet);
-            if (!alreadyWriteShader.Contains(data))
+            if (StripShaderConfig.IsLogEnable)
             {
-                SaveResult(shader, snippet);
-                alreadyWriteShader.Add(data);
+
+                double endTime = EditorApplication.timeSinceStartup;
+                int endVariants = shaderCompilerData.Count;
+
+                string dir = SaveDirectory + "/" + dateTimeStr;
+                if (!System.IO.Directory.Exists(dir))
+                {
+                    System.IO.Directory.CreateDirectory(dir);
+                }
+                System.IO.File.AppendAllText(dir + "/" + shader.name.Replace("/", "_") + "_execute.log",
+                    "ExecuteTime:" + (endTime - startTime) + " sec\n" +
+                    "Variants:" + startVariants + "->" + endVariants + "\n");
+
+                var data = new ShaderInfoData(shader, snippet);
+                if (!alreadyWriteShader.Contains(data))
+                {
+                    SaveResult(shader, snippet);
+                    alreadyWriteShader.Add(data);
+                }
             }
-#endif
         }
 
-
-
-
-
-#if DEBUG_LOG_STRIPPING_VARIANT
+        #region LOGGING
 
         private void InitLogInfo()
         {
@@ -515,6 +505,7 @@ namespace UTJ
 #endif
             sb.Append("\n").Append("\n");
         }
-#endif
+
+        #endregion LOGGING
     }
 }
