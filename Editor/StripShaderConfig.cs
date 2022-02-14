@@ -4,7 +4,7 @@ using System.IO;
 
 using UnityEditor.Callbacks;
 
-namespace UTJ
+namespace UTJ.ShaderVariantStripping
 {
     internal class StripShaderConfig
     {
@@ -14,7 +14,7 @@ namespace UTJ
         struct ConfigData {
             public bool enabled;
             public bool logEnabled;
-            public bool removeAllFromNoCollectedShader;
+            public bool strictVariantStripping;
             public bool disableOtherStipper;
             public int order;
         }
@@ -24,6 +24,11 @@ namespace UTJ
         public static bool IsEnable
         {
             get { return currentConfig.enabled; }
+            set
+            {
+                currentConfig.enabled = value;
+                SaveConfigData();
+            }
         }
         public static bool IsLogEnable
         {
@@ -34,12 +39,12 @@ namespace UTJ
             }
         }
 
-        public static bool RemoveAllFromNoCollectedShader
+        public static bool StrictVariantStripping
         {
-            get { return currentConfig.removeAllFromNoCollectedShader; }
+            get { return currentConfig.strictVariantStripping; }
             set
             {
-                currentConfig.removeAllFromNoCollectedShader = value;
+                currentConfig.strictVariantStripping = value;
                 if (!value)
                 {
                     DisableOtherStipper = false;
@@ -81,7 +86,7 @@ namespace UTJ
                 currentConfig = new ConfigData()
                 {
                     enabled = true,
-                    removeAllFromNoCollectedShader = false,
+                    strictVariantStripping = false,
                     disableOtherStipper = false,
                     logEnabled = true,
                     order = int.MinValue,

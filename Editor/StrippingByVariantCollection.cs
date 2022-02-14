@@ -27,7 +27,7 @@ using UnityEditor.Build;
 using UnityEngine.Rendering;
 using System.Text;
 
-namespace UTJ
+namespace UTJ.ShaderVariantStripping
 {
     public class StrippingByVariantCollection : IPreprocessShaders
     {
@@ -273,7 +273,7 @@ namespace UTJ
                 {
                     LogNotInVariantColllection(shader, snippet, shaderCompilerData);
                 }
-                if (StripShaderConfig.RemoveAllFromNoCollectedShader)
+                if (StripShaderConfig.StrictVariantStripping)
                 {
                     shaderCompilerData.Clear();
                 }

@@ -1,0 +1,14 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
+    <ui:Toggle label="Enable Stripping" name="Enabled" style="margin-left: 10px;" />
+    <ui:Toggle label="Log Variant" name="LogEnable" style="margin-left: 10px;" />
+    <ui:Foldout text="Advanced" style="margin-left: 10px;">
+        <ui:Toggle label="Strict Variant Stripping" name="StrictVariantStripping" />
+        <ui:Toggle label="Disable Other Stripping" name="DisalbeOthers" />
+        <uie:IntegerField label="Script Execute Order" value="42" name="ExecuteOrder" />
+        <ui:VisualElement style="flex-direction: row; margin-top: 3px;">
+            <ui:VisualElement style="width: 130px;" />
+            <ui:Button text="Min" display-tooltip-when-elided="true" name="ExecOrderMinBtn" style="width: 40px;" />
+            <ui:Button text="Max" display-tooltip-when-elided="true" name="ExecOrderMaxBtn" style="width: 40px;" />
+        </ui:VisualElement>
+    </ui:Foldout>
+</ui:UXML>
