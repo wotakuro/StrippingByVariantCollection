@@ -78,6 +78,19 @@ namespace UTJ.ShaderVariantStripping
             }
         }
 
+        private bool ShouldRemoveOther
+        {
+            get
+            {
+                return currentConfig.enabled & currentConfig.strictVariantStripping & currentConfig.disableOtherStipper;
+            }
+        }
+
+        private static void ReloadCode()
+        {
+            AssetDatabase.ImportAsset("Packages/com.utj.stripvariant/Editor/StripShaderConfig.cs", ImportAssetOptions.ForceUpdate);
+        }
+
         [InitializeOnLoadMethod]
         public static void Init()
         {

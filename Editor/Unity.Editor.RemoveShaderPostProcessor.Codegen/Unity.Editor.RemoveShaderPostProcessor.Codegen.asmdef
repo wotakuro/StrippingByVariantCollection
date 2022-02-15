@@ -16,6 +16,12 @@
     ],
     "autoReferenced": false,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.nuget.mono-cecil",
+            "expression": "",
+            "define": "ENABLE_KILL_OTHER_SHADER_STRIPPER"
+        }
+    ],
     "noEngineReferences": false
 }
