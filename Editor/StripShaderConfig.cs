@@ -26,8 +26,14 @@ namespace UTJ.ShaderVariantStripping
             get { return currentConfig.enabled; }
             set
             {
+                var backupFlag = ShouldRemoveOther;
                 currentConfig.enabled = value;
                 SaveConfigData();
+
+                if( backupFlag != ShouldRemoveOther)
+                {
+                    ReloadCode();
+                }
             }
         }
         public static bool IsLogEnable
@@ -44,12 +50,18 @@ namespace UTJ.ShaderVariantStripping
             get { return currentConfig.strictVariantStripping; }
             set
             {
+                var backupFlag = ShouldRemoveOther;
+
                 currentConfig.strictVariantStripping = value;
                 if (!value)
                 {
                     DisableOtherStipper = false;
                 }
                 SaveConfigData();
+                if (backupFlag != ShouldRemoveOther)
+                {
+                    ReloadCode();
+                }
             }
         }
 
@@ -73,12 +85,17 @@ namespace UTJ.ShaderVariantStripping
             }
             set
             {
+                var backupFlag = ShouldRemoveOther;
                 currentConfig.disableOtherStipper = value;
                 SaveConfigData();
+                if (backupFlag != ShouldRemoveOther)
+                {
+                    ReloadCode();
+                }
             }
         }
 
-        private bool ShouldRemoveOther
+        private static bool ShouldRemoveOther
         {
             get
             {
