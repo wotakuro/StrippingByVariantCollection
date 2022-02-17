@@ -1,7 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
     <ui:Toggle label="Enable Stripping" name="Enabled" style="margin-left: 10px;" />
     <ui:Toggle label="Log Variant" name="LogEnable" style="margin-left: 10px;" />
-    <ui:Foldout text="Advanced" style="margin-left: 10px;">
+    <ui:Foldout text="Advanced" style="margin-left: 10px; flex-shrink: 0;">
         <ui:Toggle label="Strict Variant Stripping" name="StrictVariantStripping" />
         <ui:Toggle label="Disable Other Stripping" name="DisalbeOthers" />
         <uie:IntegerField label="Script Execute Order" value="42" name="ExecuteOrder" />
@@ -11,4 +11,9 @@
             <ui:Button text="Max" display-tooltip-when-elided="true" name="ExecOrderMaxBtn" style="width: 40px;" />
         </ui:VisualElement>
     </ui:Foldout>
+    <ui:Label text="Exculude Stripping Rule" display-tooltip-when-elided="true" style="margin-left: 10px;" />
+    <ui:ScrollView style="margin-left: 20px;">
+        <ui:ListView focusable="true" name="ExcludeList" reorderable="true" item-height="20" />
+        <ui:Button text="Add ShaderVariantCollection" display-tooltip-when-elided="true" name="AppendExcludeBtn" />
+    </ui:ScrollView>
 </ui:UXML>

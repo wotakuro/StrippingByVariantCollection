@@ -25,6 +25,11 @@ namespace UTJ.ShaderVariantStripping
         private Button executeOrderMinBtn;
         private Button executeOrderMaxBtn;
 
+        private Button addExcludeBtn;
+        private ListView excludeVariantListView;
+
+        private List<ShaderVariantCollection> collections = new List<ShaderVariantCollection>();
+
         // Start is called before the first frame update
         void OnEnable()
         {
@@ -42,6 +47,9 @@ namespace UTJ.ShaderVariantStripping
             executeOrderMinBtn = this.rootVisualElement.Q<Button>("ExecOrderMinBtn");
             executeOrderMaxBtn = this.rootVisualElement.Q<Button>("ExecOrderMaxBtn");
 
+            addExcludeBtn = this.rootVisualElement.Q<Button>("AppendExcludeBtn");
+            excludeVariantListView = this.rootVisualElement.Q<ListView>("ExcludeList");
+
 
             enableToggle.SetValueWithoutNotify(StripShaderConfig.IsEnable);
             logToggle.SetValueWithoutNotify(StripShaderConfig.IsLogEnable);
@@ -57,11 +65,14 @@ namespace UTJ.ShaderVariantStripping
             orderIntField.RegisterCallback<FocusOutEvent>(OnLostFocusIntField);
             executeOrderMinBtn.clicked += OnClickMinButton;
             executeOrderMaxBtn.clicked += OnClickMaxButton;
+            addExcludeBtn.clicked += OnClickAddExclude;
 
             SetUIActiveAtEnabled(enableToggle.value);
             SetUIActiveAtStrictMode(strictModeToggle.value);
 
+            SetupExcludeRules();
         }
+
 
 
         private void OnChangeEnabbleToggle(ChangeEvent<bool> val)
@@ -114,6 +125,51 @@ namespace UTJ.ShaderVariantStripping
         {
             StripShaderConfig.Order = int.MaxValue;
             this.orderIntField.SetValueWithoutNotify(int.MaxValue);
+        }
+
+
+        private void SetupExcludeRules()
+        {
+            excludeVariantListView.itemHeight = 20;
+            excludeVariantListView.reorderable = true;
+
+            excludeVariantListView.makeItem = () =>
+            {
+                return new VariantCollectionUI(OnChangeExclueValue, OnRemoveExclude);
+            };
+            excludeVariantListView.bindItem = (e, i) => {
+                var variantUI = (e as VariantCollectionUI);
+                variantUI.variantCollection = collections[i];
+                variantUI.ListIndex = i;
+            };
+            excludeVariantListView.itemsSource = collections;
+
+            excludeVariantListView.Refresh();
+            excludeVariantListView.style.height = excludeVariantListView.itemHeight * collections.Count;
+
+        }
+
+        private void OnClickAddExclude()
+        {
+            collections.Add(null);
+            excludeVariantListView.Refresh();
+            excludeVariantListView.style.height = excludeVariantListView.itemHeight * collections.Count;
+        }
+        private void OnChangeExclueValue(VariantCollectionUI variantCollectionUI)
+        {
+            collections[variantCollectionUI.ListIndex] = variantCollectionUI.variantCollection;
+        }
+
+        private void OnRemoveExclude(VariantCollectionUI variantCollectionUI)
+        {
+            collections.RemoveAt(variantCollectionUI.ListIndex);
+            excludeVariantListView.Refresh();
+            excludeVariantListView.style.height = excludeVariantListView.itemHeight * collections.Count;
+        }
+
+        private void SaveExcludeRule()
+        {
+
         }
     }
 }

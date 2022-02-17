@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using System.IO;
-
+using System.Collections.Generic;
 using UnityEditor.Callbacks;
 
 namespace UTJ.ShaderVariantStripping
@@ -17,6 +17,7 @@ namespace UTJ.ShaderVariantStripping
             public bool strictVariantStripping;
             public bool disableOtherStipper;
             public int order;
+            public List<string> exclude;
         }
 
         private static ConfigData currentConfig;
