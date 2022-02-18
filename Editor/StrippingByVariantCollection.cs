@@ -133,6 +133,15 @@ namespace UTJ.ShaderVariantStripping
                     collections.Add(obj);
                 }
             }
+            var excludeList = StripShaderConfig.GetVariantCollectionAsset();
+            foreach(var exclude in excludeList)
+            {
+                if (exclude != null)
+                {
+                    collections.Remove(exclude);
+                }
+            }
+
             return collections;
         }
 

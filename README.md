@@ -3,7 +3,11 @@
 プロジェクト内にあるShaderVariantCollectionを探してきて、登録されていないVariantはすべてビルドから除外します。<br />
 ShaderVariantCollectionにシェーダーを登録していなかった場合は何もしません。
 
-オン・オフをメニューの「UTJ/ShaderVariantStrip/Enable」のチェックのオン・オフで切替できます。<br />
+メニューの「UTJ/ShaderVariantStrip」の設定ウィンドウを変更することが出来ます。<br />
+
+![alt text](Documentation~/ConfigWindow.png)
+
+
 ビルドした時に、どのバリアントを入れて、どのバリアントを除外したか？をログとして残します。<br />
 プロジェクト直下の「ShaderVariants/Builds/タイムスタンプ」ディレクトリ以下に書き出します。<br />
 
