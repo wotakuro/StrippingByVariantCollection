@@ -28,7 +28,7 @@ namespace UTJ.ShaderVariantStripping
         private Button addExcludeBtn;
         private ListView excludeVariantListView;
 
-        private List<ShaderVariantCollection> collections = new List<ShaderVariantCollection>();
+        private List<ShaderVariantCollection> collections;
 
         // Start is called before the first frame update
         void OnEnable()
@@ -130,6 +130,7 @@ namespace UTJ.ShaderVariantStripping
 
         private void SetupExcludeRules()
         {
+            this.collections = StripShaderConfig.GetVariantCollectionAsset();
             excludeVariantListView.itemHeight = 20;
             excludeVariantListView.reorderable = true;
 
@@ -158,6 +159,7 @@ namespace UTJ.ShaderVariantStripping
         private void OnChangeExclueValue(VariantCollectionUI variantCollectionUI)
         {
             collections[variantCollectionUI.ListIndex] = variantCollectionUI.variantCollection;
+            StripShaderConfig.SetVariantCollection(this.collections);
         }
 
         private void OnRemoveExclude(VariantCollectionUI variantCollectionUI)
@@ -165,11 +167,12 @@ namespace UTJ.ShaderVariantStripping
             collections.RemoveAt(variantCollectionUI.ListIndex);
             excludeVariantListView.Refresh();
             excludeVariantListView.style.height = excludeVariantListView.itemHeight * collections.Count;
+            StripShaderConfig.SetVariantCollection(this.collections);
         }
 
-        private void SaveExcludeRule()
+        void OnDisable()
         {
-
+            StripShaderConfig.SetVariantCollection(this.collections);
         }
     }
 }

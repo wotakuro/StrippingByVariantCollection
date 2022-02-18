@@ -17,7 +17,7 @@ namespace UTJ.ShaderVariantStripping
             public bool strictVariantStripping;
             public bool disableOtherStipper;
             public int order;
-            public List<string> exclude;
+            public List<string> excludeVariantCollection;
         }
 
         private static ConfigData currentConfig;
@@ -145,6 +145,53 @@ namespace UTJ.ShaderVariantStripping
             File.WriteAllText(ConfigFile, str);
         }
 
+        public static List<ShaderVariantCollection> GetVariantCollectionAsset()
+        {
+            List<ShaderVariantCollection> list = new List<ShaderVariantCollection>();
+            if( currentConfig.excludeVariantCollection != null)
+            {
+                foreach( var collectionPath in currentConfig.excludeVariantCollection)
+                {
+                    var variantCollectionAsset = AssetDatabase.LoadAssetAtPath<ShaderVariantCollection>(collectionPath);
+                    list.Add(variantCollectionAsset);
+                }
+            }
+            return list;
+        }
+
+        public static void SetVariantCollection(List<ShaderVariantCollection> list)
+        {
+            List<string> paths = new List<string>();
+            foreach (var collectionAsset in list)
+            {
+                paths.Add(AssetDatabase.GetAssetPath(collectionAsset));
+            }
+            if(currentConfig.excludeVariantCollection == null)
+            {
+                currentConfig.excludeVariantCollection = new List<string>();
+            }
+
+            if(!IsSameList(paths,currentConfig.excludeVariantCollection))
+            {
+                currentConfig.excludeVariantCollection = paths;
+                SaveConfigData();
+            }
+        }
+
+        private static bool IsSameList(List<string> src1, List<string> src2)
+        {
+            if(src2 == null)
+            {
+                return false;
+            }
+            if( src1.Count != src2.Count) { return false; }
+
+            for(int i = 0; i < src1.Count; ++i)
+            {
+                if(src1[i] != src2[i]) { return false; }
+            }
+            return true;
+        }
 
     }
 
