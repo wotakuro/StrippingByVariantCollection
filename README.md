@@ -1,18 +1,38 @@
 # StrippingByVariantCollection
 
-プロジェクト内にあるShaderVariantCollectionを探してきて、登録されていないVariantはすべてビルドから除外します。<br />
-ShaderVariantCollectionにシェーダーを登録していなかった場合は何もしません。
-
+プロジェクト内にあるShaderVariantCollectionを探してきて、登録されていないVariantをビルドから除外します。<br />
 メニューの「UTJ/ShaderVariantStrip」の設定ウィンドウを変更することが出来ます。<br />
 
+## 設定画面について
 ![alt text](Documentation~/ConfigWindow.png)
 
+### Enable Stripping
+Strip処理を行うかどうかを指定します。
 
-ビルドした時に、どのバリアントを入れて、どのバリアントを除外したか？をログとして残します。<br />
+## 「Reset」ボタン
+
+### Log Variants
+ビルドした時に、どのバリアントを入れて、どのバリアントを除外したか？をログとして残すかを指定します。<br />
 プロジェクト直下の「ShaderVariants/Builds/タイムスタンプ」ディレクトリ以下に書き出します。<br />
+これはStrippingが無効でもログ書き出しすることが可能です。
 
-連続でビルドをする場合などは…。<br />
-タイムスタンプとかの部分をリセットするために「UTJ/ShaderVariantStrip/ResetInfo」を呼び出してください。<br />
+
+### Strict Variant Stripping
+有効になった時は ShaderVariantCollectionにないShaderは全Variant削除を行います。
+無効の場合は、ShaderVariantCollectionにないShaderは特に特別なStrip処理は行いません。
+
+
+### DisableOther Stripping
+有効にすることでUniversal RenderPipelineなど 他のIPreprocessShadersの処理を消します。<br />
+Strict Variant Strippingが有効になっていないと、こちらの機能は使う事が出来ません。<br />
+※IL書き換えによって実現します
+
+### Script Execute Order
+本アセットのIPreprocessShadersのorder(実行順) を指定します。
+
+### Exclude Stripping Rule
+ここで指定されたShaderVariantCollectionアセットは対象外となり、無視します。
+
 
 <br />
 
