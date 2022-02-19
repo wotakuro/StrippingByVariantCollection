@@ -34,7 +34,7 @@ namespace UTJ.ShaderVariantStripping
         private static StrippingByVariantCollection instance;
 
         private bool isInitialized = false;
-        private List<ShaderVariantsInfo> shaderVariants;
+        private Dictionary<Shader,HashSet<ShaderVariantsInfo> > shaderVariants;
         private List<ShaderCompilerData> compileResultBuffer;
 
         private class SortShaderKeyword : IComparer<ShaderKeyword>
@@ -155,7 +155,7 @@ namespace UTJ.ShaderVariantStripping
             if (isInitialized) { return; }
             var variantCollections = GetProjectShaderVariantCollections();
             this.compileResultBuffer = new List<ShaderCompilerData>(1024);
-            this.shaderVariants = new List<ShaderVariantsInfo>(1024);
+            this.shaderVariants = new Dictionary<Shader, HashSet<ShaderVariantsInfo>>();
             foreach (var variantCollection in variantCollections)
             {
                 CollectVariants(this.shaderVariants, variantCollection);
@@ -193,7 +193,7 @@ namespace UTJ.ShaderVariantStripping
             return collections;
         }
 
-        private void CollectVariants(List<ShaderVariantsInfo> variants,
+        private void CollectVariants(Dictionary<Shader, HashSet<ShaderVariantsInfo>> variants,
             ShaderVariantCollection variantCollection)
         {
             var obj = new SerializedObject(variantCollection);
@@ -208,8 +208,16 @@ namespace UTJ.ShaderVariantStripping
             }
         }
 
-        private void CollectVariants(List<ShaderVariantsInfo> variants, Shader shader, SerializedProperty variantsProp)
+        private void CollectVariants(Dictionary<Shader, HashSet<ShaderVariantsInfo>> variants, Shader shader, SerializedProperty variantsProp)
         {
+            HashSet<ShaderVariantsInfo> targetHashset = null;
+            if(!variants.TryGetValue(shader, out targetHashset))
+            {
+                targetHashset = new HashSet<ShaderVariantsInfo>();
+                variants.Add(shader, targetHashset);
+            }
+
+
             for (int i = 0; i < variantsProp.arraySize; ++i)
             {
                 var variantProp = variantsProp.GetArrayElementAtIndex(i);
@@ -230,24 +238,25 @@ namespace UTJ.ShaderVariantStripping
                     keywordsArray = keywords.Split(' ');
                 }
                 ShaderVariantsInfo variant = new ShaderVariantsInfo(shader, (PassType)passType, keywordsArray);
-                variants.Add(variant);
+                if (!targetHashset.Contains(variant))
+                {
+                    targetHashset.Add(variant);
+                }
             }
         }
 
 
-        private bool IsExistShader(List<ShaderVariantsInfo> shaderVariants, Shader shader)
+        private bool IsExistShader(Dictionary<Shader, HashSet<ShaderVariantsInfo>> shaderVariants, Shader shader)
         {
-            foreach (var variant in shaderVariants)
+            HashSet<ShaderVariantsInfo> variantsHashSet = null;
+            if( shaderVariants.TryGetValue(shader, out variantsHashSet) )
             {
-                if (variant.shader == shader)
-                {
-                    return true;
-                }
+                return (variantsHashSet.Count > 0) ;
             }
             return false;
         }
 
-        private bool IsExist(List<ShaderVariantsInfo> shaderVariants,
+        private bool IsExist(Dictionary<Shader, HashSet<ShaderVariantsInfo>> shaderVariants,
             Shader shader, ShaderSnippetData snippet, ShaderCompilerData data)
         {
             var keywords = data.shaderKeywordSet.GetShaderKeywords();
@@ -258,34 +267,14 @@ namespace UTJ.ShaderVariantStripping
             {
                 return true;
             }
-            foreach (var variant in shaderVariants)
+            HashSet<ShaderVariantsInfo> variantsHashSet = null;
+            if (shaderVariants.TryGetValue(shader, out variantsHashSet))
             {
-                if (variant.shader != shader)
-                {
-                    continue;
-                }
-                if (variant.passType != snippet.passType)
-                {
-                    continue;
-                }
-                if (IsMatch(variant.keywordsForCheck, compiledKeyword))
-                {
-                    return true;
-                }
+                return (variantsHashSet.Contains(targetInfo) );
             }
             return false;
         }
 
-        private bool IsMatch(List<string> a, List<string> b)
-        {
-            if (a.Count != b.Count) { return false; }
-
-            for (int i = 0; i < a.Count; ++i)
-            {
-                if (a[i] != b[i]) { return false; }
-            }
-            return true;
-        }
         private List<string> Convert(Shader shader, ShaderKeyword[] keywords)
         {
             List<string> converted = new List<string>(keywords.Length);
@@ -312,6 +301,8 @@ namespace UTJ.ShaderVariantStripping
         public void OnProcessShader(Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> shaderCompilerData)
         {
 
+            this.Initialize();
+
             if (!StripShaderConfig.IsEnable)
             {
                 LogAllInVariantColllection(shader, snippet, shaderCompilerData);
@@ -320,7 +311,6 @@ namespace UTJ.ShaderVariantStripping
             double startTime = EditorApplication.timeSinceStartup;
             int startVariants = shaderCompilerData.Count;
 
-            this.Initialize();
             
             this.includeVariantsBuffer.Length = 0;
             this.excludeVariantsBuffer.Length = 0;
@@ -460,7 +450,14 @@ namespace UTJ.ShaderVariantStripping
 
         private void SaveProjectVaraiants()
         {
-            var list = new List<ShaderVariantsInfo>(this.shaderVariants);
+            var list = new List<ShaderVariantsInfo>(1024);
+            foreach(var variantHashSet in this.shaderVariants.Values)
+            {
+                foreach(var val in variantHashSet)
+                {
+                    list.Add(val);
+                }
+            }
             list.Sort((a, b) =>
             {
                 int shaderName = a.shader.name.CompareTo(b.shader.name);

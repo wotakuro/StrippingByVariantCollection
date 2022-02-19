@@ -1,6 +1,9 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
     <ui:Toggle label="Enable Stripping" name="Enabled" style="margin-left: 10px;" />
-    <ui:Toggle label="Log Variant" name="LogEnable" tooltip="Log files are placed under &quot;./ShaderVariants/Builds&quot;" style="margin-left: 10px;" />
+    <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+        <ui:Toggle label="Log Variant" name="LogEnable" tooltip="Log files are placed under &quot;./ShaderVariants/Builds&quot;" style="margin-left: 10px;" />
+        <ui:Button text="Reset Timestamp" display-tooltip-when-elided="true" name="ResetTimestampBtn" />
+    </ui:VisualElement>
     <ui:Foldout text="Advanced" style="margin-left: 10px; flex-shrink: 0;">
         <ui:Toggle label="Strict Variant Stripping" name="StrictVariantStripping" tooltip="Strict mode enabled -&gt; remove all variants if the shader is not in ShaderVariantColleciton." />
         <ui:Toggle label="Disable Other Stripping" name="DisalbeOthers" tooltip="Kill other &quot;IProcessShaders&quot; by editing IL." />

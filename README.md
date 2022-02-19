@@ -9,13 +9,14 @@
 ### Enable Stripping
 Strip処理を行うかどうかを指定します。
 
-## 「Reset」ボタン
-
 ### Log Variants
 ビルドした時に、どのバリアントを入れて、どのバリアントを除外したか？をログとして残すかを指定します。<br />
 プロジェクト直下の「ShaderVariants/Builds/タイムスタンプ」ディレクトリ以下に書き出します。<br />
 これはStrippingが無効でもログ書き出しすることが可能です。
 
+## 「Reset Timestamp」ボタン
+連続でビルドする際に、ログのタイムスタンプがうまくリセットされない可能性があったため用意しました。
+連続ビルド時にログのタイムスタンプが上手く更新されないことがあったら押してください。
 
 ### Strict Variant Stripping
 有効になった時は ShaderVariantCollectionにないShaderは全Variant削除を行います。

@@ -25,6 +25,8 @@ namespace UTJ.ShaderVariantStripping
         private Button executeOrderMinBtn;
         private Button executeOrderMaxBtn;
 
+        private Button resetTimestampBtn;
+
         private Button addExcludeBtn;
         private ListView excludeVariantListView;
 
@@ -47,6 +49,8 @@ namespace UTJ.ShaderVariantStripping
             executeOrderMinBtn = this.rootVisualElement.Q<Button>("ExecOrderMinBtn");
             executeOrderMaxBtn = this.rootVisualElement.Q<Button>("ExecOrderMaxBtn");
 
+            resetTimestampBtn = this.rootVisualElement.Q<Button>("ResetTimestampBtn");
+
             addExcludeBtn = this.rootVisualElement.Q<Button>("AppendExcludeBtn");
             excludeVariantListView = this.rootVisualElement.Q<ListView>("ExcludeList");
 
@@ -62,6 +66,8 @@ namespace UTJ.ShaderVariantStripping
             strictModeToggle.RegisterValueChangedCallback(OnChangeStrictModeToggle);
             disableOtherToggle.RegisterValueChangedCallback(OnChangeDisableOthersToggle);
 
+            resetTimestampBtn.clicked += OnClickResetTimestamp;
+
             orderIntField.RegisterCallback<FocusOutEvent>(OnLostFocusIntField);
             executeOrderMinBtn.clicked += OnClickMinButton;
             executeOrderMaxBtn.clicked += OnClickMaxButton;
@@ -71,6 +77,7 @@ namespace UTJ.ShaderVariantStripping
             SetUIActiveAtStrictMode(strictModeToggle.value);
 
             SetupExcludeRules();
+            StrippingByVariantCollection.ResetData();
         }
 
 
@@ -168,6 +175,12 @@ namespace UTJ.ShaderVariantStripping
             excludeVariantListView.Refresh();
             excludeVariantListView.style.height = excludeVariantListView.itemHeight * collections.Count;
             StripShaderConfig.SetVariantCollection(this.collections);
+        }
+
+        void OnClickResetTimestamp()
+        {
+            StrippingByVariantCollection.ResetData();
+
         }
 
         void OnDisable()
