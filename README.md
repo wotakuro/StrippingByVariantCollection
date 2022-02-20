@@ -1,42 +1,41 @@
 # StrippingByVariantCollection
+[日本語はコチラ](README.ja.md)
 
-プロジェクト内にあるShaderVariantCollectionを探してきて、登録されていないVariantをビルドから除外します。<br />
-メニューの「UTJ/ShaderVariantStrip」の設定ウィンドウを変更することが出来ます。<br />
+Find the ShaderVariantCollection in the project and exclude unregistered variants from the build.
+You can change the behaiour in the settings window (  "UTJ/ShaderVariantStrip"  ).
 
 ## 設定画面について
 ![alt text](Documentation~/ConfigWindow.png)
 
 ### Enable Stripping
-Strip処理を行うかどうかを指定します。
+Set to perform strip processing or not.
 
 ### Log Variants
-ビルドした時に、どのバリアントを入れて、どのバリアントを除外したか？をログとして残すかを指定します。<br />
-プロジェクト直下の「ShaderVariants/Builds/タイムスタンプ」ディレクトリ以下に書き出します。<br />
-これはStrippingが無効でもログ書き出しすることが可能です。
+Specify whether to log which variants are included and which are excluded during the build process. Specify whether you want to keep a log of which variants were included and which were excluded.<br />
+It will be written to the directory "ShaderVariants/Builds/Timestamps" under the project.<br />
+This can be done even if Stripping is disabled.
 
-## 「Reset Timestamp」ボタン
-連続でビルドする際に、ログのタイムスタンプがうまくリセットされない可能性があったため用意しました。
-連続ビルド時にログのタイムスタンプが上手く更新されないことがあったら押してください。
+## 「Reset Timestamp」Button
+There was a possibility that the log timestamp was not reset properly when building consecutively. <br />
+If you find that the log timestamps are not updated properly during continuous build, please press this button.
 
 ### Strict Variant Stripping
-有効になった時は ShaderVariantCollectionにないShaderは全Variant削除を行います。
-無効の場合は、ShaderVariantCollectionにないShaderは特に特別なStrip処理は行いません。
+When enabled, Shaders that are not in the ShaderVariantCollection will be deleted all Variants.
+When disabled, shaders that are not in the ShaderVariantCollection is not performed by any special strip processing.
 
 
 ### DisableOther Stripping
-有効にすることでUniversal RenderPipelineなど 他のIPreprocessShadersの処理を消します。<br />
-Strict Variant Strippingが有効になっていないと、こちらの機能は使う事が出来ません。<br />
-※IL書き換えによって実現します
+Enabling this feature will remove the processing of other IPreprocessShaders such as Universal RenderPipeline.<br />
+If Strict Variant Stripping is not enabled, you cannot use this feature.
+*It's implemented by rewriting IL code.
 
 ### Script Execute Order
-本アセットのIPreprocessShadersのorder(実行順) を指定します。
+Setting the order of "IPreprocessShaders" in this asset.
 
 ### Exclude Stripping Rule
-ここで指定されたShaderVariantCollectionアセットは対象外となり、無視します。
-
+The ShaderVariantCollection asset specified here will be ignored.
 
 <br />
 
-参考：
-こちらはスクリプタブルシェーダーバリアントの除去を使っています<br />
+Reference：<br />
 https://blogs.unity3d.com/jp/2018/05/14/stripping-scriptable-shader-variants/
