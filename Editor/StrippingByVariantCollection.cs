@@ -51,7 +51,7 @@ namespace UTJ.ShaderVariantStripping
             }
         }
 
-        public struct ShaderVariantsInfo: IEqualityComparer<ShaderVariantsInfo>
+        public struct ShaderVariantsInfo
         {
             public Shader shader;
             public PassType passType;
@@ -63,7 +63,8 @@ namespace UTJ.ShaderVariantStripping
             public ShaderVariantsInfo(Shader sh, PassType pass, string[] words)
             {
                 int wordsLength = 0;
-                if(words != null) {
+                if (words != null)
+                {
                     wordsLength = words.Length;
                 }
                 this.shader = sh;
@@ -79,16 +80,17 @@ namespace UTJ.ShaderVariantStripping
                 keywordsForCheck = new List<string>();
                 foreach (var keywordInfo in keywordInfos)
                 {
-                    if (!string.IsNullOrEmpty( ShaderKeyword.GetKeywordName(sh, keywordInfo)) &&
-                        ShaderKeyword.GetKeywordType( sh,keywordInfo) != ShaderKeywordType.BuiltinDefault)
+                    if (!string.IsNullOrEmpty(ShaderKeyword.GetKeywordName(sh, keywordInfo)) &&
+                        ShaderKeyword.GetKeywordType(sh, keywordInfo) != ShaderKeywordType.BuiltinDefault)
                     {
-                        keywordsForCheck.Add( ShaderKeyword.GetKeywordName(sh, keywordInfo) );
+                        keywordsForCheck.Add(ShaderKeyword.GetKeywordName(sh, keywordInfo));
                     }
                 }
                 keywordsForCheck.Sort();
             }
+        }
 
-
+        private class ShaderVarintInfoComparerer : IEqualityComparer<ShaderVariantsInfo> { 
 
             public bool Equals(ShaderVariantsInfo x, ShaderVariantsInfo y)
             {
@@ -117,14 +119,14 @@ namespace UTJ.ShaderVariantStripping
             public int GetHashCode(ShaderVariantsInfo obj)
             {
                 int hashCode = 0;
-                if (shader != null)
+                if (obj.shader != null)
                 {
-                    hashCode += shader.GetHashCode();
+                    hashCode += obj.shader.GetHashCode();
                 }
-                hashCode += passType.GetHashCode();
-                if (keywordsForCheck != null)
+                hashCode += obj.passType.GetHashCode();
+                if (obj.keywordsForCheck != null)
                 {
-                    foreach (var keyword in keywordsForCheck)
+                    foreach (var keyword in obj.keywordsForCheck)
                     {
                         hashCode += keyword.GetHashCode();
                     }
@@ -213,7 +215,7 @@ namespace UTJ.ShaderVariantStripping
             HashSet<ShaderVariantsInfo> targetHashset = null;
             if(!variants.TryGetValue(shader, out targetHashset))
             {
-                targetHashset = new HashSet<ShaderVariantsInfo>();
+                targetHashset = new HashSet<ShaderVariantsInfo>(new ShaderVarintInfoComparerer());
                 variants.Add(shader, targetHashset);
             }
 
@@ -270,7 +272,8 @@ namespace UTJ.ShaderVariantStripping
             HashSet<ShaderVariantsInfo> variantsHashSet = null;
             if (shaderVariants.TryGetValue(shader, out variantsHashSet))
             {
-                return (variantsHashSet.Contains(targetInfo) );
+                bool flag =  (variantsHashSet.Contains(targetInfo) );
+                return flag;
             }
             return false;
         }
