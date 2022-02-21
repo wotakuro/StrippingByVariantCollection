@@ -23,8 +23,8 @@ Strip処理を行うかどうかを指定します。
 無効の場合は、ShaderVariantCollectionにないShaderは特に特別なStrip処理は行いません。
 
 
-### DisableOther Stripping
-有効にすることでUniversal RenderPipelineなど 他のIPreprocessShadersの処理を消します。<br />
+### Disable Unity Stripping
+有効にすることで、「UnityEngine.」「Unity.」 以下にある IPreprocessShadersの処理を消します。(Universal RenderPipelineにあるものを無効にするなど出来ます)<br />
 Strict Variant Strippingが有効になっていないと、こちらの機能は使う事が出来ません。<br />
 ※IL書き換えによって実現します
 

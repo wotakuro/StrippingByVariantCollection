@@ -33,7 +33,7 @@ namespace UTJ.ShaderVariantStripping.CodeGen
             string str = File.ReadAllText(ConfigFile);
             bool enabled = GetFlag(str, "enabled");
             bool strictMode = GetFlag(str, "strictVariantStripping");
-            bool disableOthers = GetFlag(str,"disableOtherStipper");
+            bool disableUnityStrip = GetFlag(str, "disableUnityStrip");
 
             /*
             System.IO.File.WriteAllText("debug.txt",
@@ -41,7 +41,7 @@ namespace UTJ.ShaderVariantStripping.CodeGen
                 "strictMode:" + strictMode + "\n" +
                 "disableOthers:" + disableOthers + "\n" );
             */
-            ExecuteRemoveOthers = enabled & strictMode & disableOthers;
+            ExecuteRemoveOthers = enabled & strictMode & disableUnityStrip;
         }
 
 

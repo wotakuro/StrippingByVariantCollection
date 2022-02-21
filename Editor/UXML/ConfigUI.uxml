@@ -6,7 +6,7 @@
     </ui:VisualElement>
     <ui:Foldout text="Advanced" style="margin-left: 10px; flex-shrink: 0;">
         <ui:Toggle label="Strict Variant Stripping" name="StrictVariantStripping" tooltip="Strict mode enabled -&gt; remove all variants if the shader is not in ShaderVariantColleciton." />
-        <ui:Toggle label="Disable Other Stripping" name="DisalbeOthers" tooltip="Kill other &quot;IProcessShaders&quot; by editing IL." />
+        <ui:Toggle label="Disable Unity Stripping" name="DisableUnityStrip" tooltip="Disable the  &quot;IPreprocessShaders&quot; in the Unity or UnityEngine namespace  by editing IL." />
         <uie:IntegerField label="Script Execute Order" value="42" name="ExecuteOrder" tooltip="The order of this IProcessShaders" />
         <ui:VisualElement style="flex-direction: row; margin-top: 3px;">
             <ui:VisualElement style="width: 130px;" />

@@ -30,8 +30,14 @@ namespace UTJ.ShaderVariantStripping.CodeGen
             {
                 return false;
             }
+            if ( !compiledAssembly.Name.StartsWith("Unity.") &&
+                compiledAssembly.Name.StartsWith("UnityEngine.") )
+            {
+                return false;
+            }
 
-            if(compiledAssembly.Name == "UTJ.StripVariant"){
+
+            if (compiledAssembly.Name == "UTJ.StripVariant"){
                 return false;
             }
             var isForEditor = compiledAssembly.Defines?.Contains("UNITY_EDITOR") ?? false;

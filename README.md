@@ -4,7 +4,7 @@
 Find the ShaderVariantCollection in the project and exclude unregistered variants from the build.
 You can change the behaiour in the settings window (  "UTJ/ShaderVariantStrip"  ).
 
-## 設定画面について
+## about Setting Window
 ![alt text](Documentation~/ConfigWindow.png)
 
 ### Enable Stripping
@@ -24,8 +24,8 @@ When enabled, Shaders that are not in the ShaderVariantCollection will be delete
 When disabled, shaders that are not in the ShaderVariantCollection is not performed by any special strip processing.
 
 
-### DisableOther Stripping
-Enabling this feature will remove the processing of other IPreprocessShaders such as Universal RenderPipeline.<br />
+### Disable Unity Stripping
+Enabling this feature will remove the IPreprocessShaders under the "Unity." or "UnityEngine.".( such as Universal RenderPipeline. )<br />
 If Strict Variant Stripping is not enabled, you cannot use this feature.
 *It's implemented by rewriting IL code.
 

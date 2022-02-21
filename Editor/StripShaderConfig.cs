@@ -15,7 +15,7 @@ namespace UTJ.ShaderVariantStripping
             public bool enabled;
             public bool logEnabled;
             public bool strictVariantStripping;
-            public bool disableOtherStipper;
+            public bool disableUnityStrip;
             public int order;
             public List<string> excludeVariantCollection;
         }
@@ -56,7 +56,7 @@ namespace UTJ.ShaderVariantStripping
                 currentConfig.strictVariantStripping = value;
                 if (!value)
                 {
-                    DisableOtherStipper = false;
+                    DisableUnityStrip = false;
                 }
                 SaveConfigData();
                 if (backupFlag != ShouldRemoveOther)
@@ -78,16 +78,16 @@ namespace UTJ.ShaderVariantStripping
                 SaveConfigData();
             }
         }
-        public static bool DisableOtherStipper
+        public static bool DisableUnityStrip
         {
             get
             {
-                return currentConfig.disableOtherStipper;
+                return currentConfig.disableUnityStrip;
             }
             set
             {
                 var backupFlag = ShouldRemoveOther;
-                currentConfig.disableOtherStipper = value;
+                currentConfig.disableUnityStrip = value;
                 SaveConfigData();
                 if (backupFlag != ShouldRemoveOther)
                 {
@@ -100,7 +100,7 @@ namespace UTJ.ShaderVariantStripping
         {
             get
             {
-                return currentConfig.enabled & currentConfig.strictVariantStripping & currentConfig.disableOtherStipper;
+                return currentConfig.enabled & currentConfig.strictVariantStripping & currentConfig.disableUnityStrip;
             }
         }
 
@@ -118,7 +118,7 @@ namespace UTJ.ShaderVariantStripping
                 {
                     enabled = true,
                     strictVariantStripping = false,
-                    disableOtherStipper = false,
+                    disableUnityStrip = false,
                     logEnabled = true,
                     order = int.MinValue,
                 };

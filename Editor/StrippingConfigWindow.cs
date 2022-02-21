@@ -19,7 +19,7 @@ namespace UTJ.ShaderVariantStripping
         private Toggle enableToggle;
         private Toggle logToggle;
         private Toggle strictModeToggle;
-        private Toggle disableOtherToggle;
+        private Toggle disableUnityStrip;
         private IntegerField orderIntField;
 
         private Button executeOrderMinBtn;
@@ -43,7 +43,7 @@ namespace UTJ.ShaderVariantStripping
             enableToggle = this.rootVisualElement.Q<Toggle>("Enabled");
             logToggle = this.rootVisualElement.Q<Toggle>("LogEnable");
             strictModeToggle = this.rootVisualElement.Q<Toggle>("StrictVariantStripping");
-            disableOtherToggle = this.rootVisualElement.Q<Toggle>("DisalbeOthers");
+            disableUnityStrip = this.rootVisualElement.Q<Toggle>("DisableUnityStrip");
 
             orderIntField = this.rootVisualElement.Q<IntegerField>("ExecuteOrder");
             executeOrderMinBtn = this.rootVisualElement.Q<Button>("ExecOrderMinBtn");
@@ -58,13 +58,13 @@ namespace UTJ.ShaderVariantStripping
             enableToggle.SetValueWithoutNotify(StripShaderConfig.IsEnable);
             logToggle.SetValueWithoutNotify(StripShaderConfig.IsLogEnable);
             strictModeToggle.SetValueWithoutNotify(StripShaderConfig.StrictVariantStripping);
-            disableOtherToggle.SetValueWithoutNotify(StripShaderConfig.DisableOtherStipper);
+            disableUnityStrip.SetValueWithoutNotify(StripShaderConfig.DisableUnityStrip);
             orderIntField.SetValueWithoutNotify(StripShaderConfig.Order);
 
             enableToggle.RegisterValueChangedCallback(OnChangeEnabbleToggle);
             logToggle.RegisterValueChangedCallback(OnChangeLogEnabbleToggle);
             strictModeToggle.RegisterValueChangedCallback(OnChangeStrictModeToggle);
-            disableOtherToggle.RegisterValueChangedCallback(OnChangeDisableOthersToggle);
+            disableUnityStrip.RegisterValueChangedCallback(OnChangeDisableUnityStripToggle);
 
             resetTimestampBtn.clicked += OnClickResetTimestamp;
 
@@ -96,15 +96,15 @@ namespace UTJ.ShaderVariantStripping
             StripShaderConfig.StrictVariantStripping = val.newValue;
             SetUIActiveAtStrictMode(val.newValue);
         }
-        private void OnChangeDisableOthersToggle(ChangeEvent<bool> val)
+        private void OnChangeDisableUnityStripToggle(ChangeEvent<bool> val)
         {
-            StripShaderConfig.DisableOtherStipper = val.newValue;
+            StripShaderConfig.DisableUnityStrip = val.newValue;
         }
 
         private void SetUIActiveAtEnabled(bool enabled)
         {
             strictModeToggle.SetEnabled(enabled);
-            disableOtherToggle.SetEnabled(enabled);
+            disableUnityStrip.SetEnabled(enabled);
             orderIntField.SetEnabled(enabled);
 
             orderIntField.SetEnabled(enabled);
@@ -114,8 +114,8 @@ namespace UTJ.ShaderVariantStripping
 
         private void SetUIActiveAtStrictMode(bool enabled)
         {
-            disableOtherToggle.SetEnabled(enabled);
-            disableOtherToggle.SetValueWithoutNotify(StripShaderConfig.DisableOtherStipper);
+            disableUnityStrip.SetEnabled(enabled);
+            disableUnityStrip.SetValueWithoutNotify(StripShaderConfig.DisableUnityStrip);
         }
 
         private void OnLostFocusIntField(FocusOutEvent evt)
