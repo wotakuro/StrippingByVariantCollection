@@ -23,6 +23,7 @@ namespace UTJ.ShaderVariantStripping.CodeGen
             }
         }
 
+
         private void Init()
         {
             if (!File.Exists(ConfigFile))
@@ -39,8 +40,9 @@ namespace UTJ.ShaderVariantStripping.CodeGen
             System.IO.File.WriteAllText("debug.txt",
                 "enabled:" + enabled + "\n" +
                 "strictMode:" + strictMode + "\n" +
-                "disableOthers:" + disableOthers + "\n" );
+                "disableUnityStrip:" + disableUnityStrip + "\n" );
             */
+            
             ExecuteRemoveOthers = enabled & strictMode & disableUnityStrip;
         }
 

@@ -30,8 +30,11 @@ namespace UTJ.ShaderVariantStripping.CodeGen
             {
                 return false;
             }
+
+            //System.IO.File.AppendAllText("debug.txt", "Compile:" + compiledAssembly.Name + "\n");
             if ( !compiledAssembly.Name.StartsWith("Unity.") &&
-                compiledAssembly.Name.StartsWith("UnityEngine.") )
+                !compiledAssembly.Name.StartsWith("UnityEngine.") &&
+                !compiledAssembly.Name.StartsWith("UnityEditor."))
             {
                 return false;
             }
@@ -123,6 +126,7 @@ namespace UTJ.ShaderVariantStripping.CodeGen
                     if (inter.InterfaceType.FullName == "UnityEditor.Build.IPreprocessShaders")
                     {
                         removeInterface = inter;
+                        //System.IO.File.AppendAllText("debug.txt", "Remove:" + type.FullName + "\n");
                         //ToEmptyMethod(type);
                         flag = true;
                         break;
