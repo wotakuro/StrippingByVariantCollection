@@ -53,6 +53,17 @@ namespace UTJ.ShaderVariantStripping.CodeGen
 
         public override ILPostProcessResult Process(ICompiledAssembly compiledAssembly)
         {
+            try
+            {
+                return ProcessBody(compiledAssembly);
+            }catch(System.Exception e)
+            {
+
+                return new ILPostProcessResult(null, new List<DiagnosticMessage>());
+            }
+        }
+
+        private ILPostProcessResult ProcessBody(ICompiledAssembly compiledAssembly) { 
             var diagnostics = new List<DiagnosticMessage>();
             if (!WillProcess(compiledAssembly))
             {

@@ -1,7 +1,9 @@
 {
     "name": "UTJ.StripVariant",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:55ce092c730f60c48aee3cca9150085f"
+    ],
     "includePlatforms": [
         "Editor"
     ],

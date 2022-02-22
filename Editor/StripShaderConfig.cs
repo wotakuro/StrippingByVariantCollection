@@ -3,12 +3,14 @@ using UnityEditor;
 using System.IO;
 using System.Collections.Generic;
 using UnityEditor.Callbacks;
+using UTJ.ShaderVariantStripping.CodeGen;
 
 namespace UTJ.ShaderVariantStripping
 {
     internal class StripShaderConfig
     {
         private const string ConfigFile = "ShaderVariants/v2_config.txt";
+        private const string TempCompileTargetFile = "Temp/com.utj.stripvariants.asmtarget.txt";
 
         [System.Serializable]
         struct ConfigData {
@@ -106,7 +108,21 @@ namespace UTJ.ShaderVariantStripping
 
         private static void ReloadCode()
         {
-            AssetDatabase.ImportAsset("Packages/com.utj.stripvariant/Editor/StripShaderConfig.cs", ImportAssetOptions.ForceUpdate);
+            var targets = RecompileAsmUtility.GetRecompileTarget(true);
+
+            if (targets.Count <= 0)
+            {
+                return;
+            }
+
+            var target = targets[0];            
+            targets.RemoveAt(0);
+            if(targets.Count > 0)
+            {
+                RecompileAsmUtility.WriteFile(TempCompileTargetFile, targets);
+            }
+            Debug.Log("Recompiling::" + target.asmName);
+            AssetDatabase.ImportAsset( target.asmDefPath , ImportAssetOptions.ForceUpdate);            
         }
 
         [InitializeOnLoadMethod]
@@ -125,6 +141,19 @@ namespace UTJ.ShaderVariantStripping
                 return;
             }
             currentConfig = ReadConfigData();
+            EditorApplication.delayCall += () =>
+            {
+                var targets = RecompileAsmUtility.ReadFromFile(TempCompileTargetFile);
+                if (targets.Count <= 0)
+                {
+                    return;
+                }
+                var target = targets[0];
+                targets.RemoveAt(0);
+                RecompileAsmUtility.WriteFile(TempCompileTargetFile, targets); 
+                Debug.Log("Recompiling::" + target.asmName);
+                AssetDatabase.ImportAsset(target.asmDefPath, ImportAssetOptions.ForceUpdate);
+            };
         }
 
         private static ConfigData ReadConfigData()
