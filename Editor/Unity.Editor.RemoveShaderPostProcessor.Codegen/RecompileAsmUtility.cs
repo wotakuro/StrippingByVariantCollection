@@ -17,7 +17,9 @@ namespace UTJ.ShaderVariantStripping.CodeGen
             public string asmName;
             public string asmDefPath;
         }
-        
+
+        public static readonly string TempCompileTargetFile = "Temp/com.utj.stripvariants.asmtarget.txt";
+
 
         public static void Check()
         {

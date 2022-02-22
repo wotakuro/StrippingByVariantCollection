@@ -58,7 +58,7 @@ namespace UTJ.ShaderVariantStripping.CodeGen
                 return ProcessBody(compiledAssembly);
             }catch(System.Exception e)
             {
-
+                System.IO.File.WriteAllText(compiledAssembly.Name + "_err.txt", e.Message + "\n" + e.Source + "\n" + e.StackTrace );
                 return new ILPostProcessResult(null, new List<DiagnosticMessage>());
             }
         }

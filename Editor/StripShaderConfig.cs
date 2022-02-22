@@ -10,7 +10,6 @@ namespace UTJ.ShaderVariantStripping
     internal class StripShaderConfig
     {
         private const string ConfigFile = "ShaderVariants/v2_config.txt";
-        private const string TempCompileTargetFile = "Temp/com.utj.stripvariants.asmtarget.txt";
 
         [System.Serializable]
         struct ConfigData {
@@ -119,7 +118,7 @@ namespace UTJ.ShaderVariantStripping
             targets.RemoveAt(0);
             if(targets.Count > 0)
             {
-                RecompileAsmUtility.WriteFile(TempCompileTargetFile, targets);
+                RecompileAsmUtility.WriteFile(RecompileAsmUtility.TempCompileTargetFile, targets);
             }
             Debug.Log("Recompiling::" + target.asmName);
             AssetDatabase.ImportAsset( target.asmDefPath , ImportAssetOptions.ForceUpdate);            
@@ -143,14 +142,14 @@ namespace UTJ.ShaderVariantStripping
             currentConfig = ReadConfigData();
             EditorApplication.delayCall += () =>
             {
-                var targets = RecompileAsmUtility.ReadFromFile(TempCompileTargetFile);
+                var targets = RecompileAsmUtility.ReadFromFile(RecompileAsmUtility.TempCompileTargetFile);
                 if (targets.Count <= 0)
                 {
                     return;
                 }
                 var target = targets[0];
                 targets.RemoveAt(0);
-                RecompileAsmUtility.WriteFile(TempCompileTargetFile, targets); 
+                RecompileAsmUtility.WriteFile(RecompileAsmUtility.TempCompileTargetFile, targets); 
                 Debug.Log("Recompiling::" + target.asmName);
                 AssetDatabase.ImportAsset(target.asmDefPath, ImportAssetOptions.ForceUpdate);
             };
