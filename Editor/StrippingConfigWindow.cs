@@ -29,6 +29,7 @@ namespace UTJ.ShaderVariantStripping
 
         private Button addExcludeBtn;
         private ListView excludeVariantListView;
+        private Button debugListViewBtn;
 
         private List<ShaderVariantCollection> collections;
 
@@ -54,6 +55,8 @@ namespace UTJ.ShaderVariantStripping
             addExcludeBtn = this.rootVisualElement.Q<Button>("AppendExcludeBtn");
             excludeVariantListView = this.rootVisualElement.Q<ListView>("ExcludeList");
 
+            debugListViewBtn = this.rootVisualElement.Q<Button>("DebugListProcessorBtn");
+
 
             enableToggle.SetValueWithoutNotify(StripShaderConfig.IsEnable);
             logToggle.SetValueWithoutNotify(StripShaderConfig.IsLogEnable);
@@ -67,6 +70,8 @@ namespace UTJ.ShaderVariantStripping
             disableUnityStrip.RegisterValueChangedCallback(OnChangeDisableUnityStripToggle);
 
             resetTimestampBtn.clicked += OnClickResetTimestamp;
+
+            debugListViewBtn.clicked += OnClickDebugListViewBtn;
 
             orderIntField.RegisterCallback<FocusOutEvent>(OnLostFocusIntField);
             executeOrderMinBtn.clicked += OnClickMinButton;
@@ -181,6 +186,11 @@ namespace UTJ.ShaderVariantStripping
         {
             StrippingByVariantCollection.ResetData();
 
+        }
+
+        private void OnClickDebugListViewBtn()
+        {
+            ListShaderPreProcessClasses.ShowDebugWindow();
         }
 
         void OnDisable()
