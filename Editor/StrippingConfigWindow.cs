@@ -158,15 +158,16 @@ namespace UTJ.ShaderVariantStripping
             excludeVariantListView.itemsSource = collections;
 
             excludeVariantListView.Refresh();
-            excludeVariantListView.style.height = excludeVariantListView.itemHeight * collections.Count;
+            RefleshExcludeUI();
+
 
         }
 
         private void OnClickAddExclude()
         {
-            collections.Add(null);
-            excludeVariantListView.Refresh();
-            excludeVariantListView.style.height = excludeVariantListView.itemHeight * collections.Count;
+            collections.Add(null); 
+            RefleshExcludeUI();
+
         }
         private void OnChangeExclueValue(VariantCollectionUI variantCollectionUI)
         {
@@ -177,9 +178,26 @@ namespace UTJ.ShaderVariantStripping
         private void OnRemoveExclude(VariantCollectionUI variantCollectionUI)
         {
             collections.RemoveAt(variantCollectionUI.ListIndex);
-            excludeVariantListView.Refresh();
-            excludeVariantListView.style.height = excludeVariantListView.itemHeight * collections.Count;
+            RefleshExcludeUI();
             StripShaderConfig.SetVariantCollection(this.collections);
+        }
+
+        private void RefleshExcludeUI()
+        {
+#if UNITY_2021_2_OR_NEWER
+            excludeVariantListView.Rebuild();
+#else
+            excludeVariantListView.Refresh();
+#endif
+            if (collections.Count == 0)
+            {
+                excludeVariantListView.style.height = excludeVariantListView.itemHeight;
+            }
+            else
+            {
+                excludeVariantListView.style.height = excludeVariantListView.itemHeight * collections.Count;
+            }
+
         }
 
         void OnClickResetTimestamp()
