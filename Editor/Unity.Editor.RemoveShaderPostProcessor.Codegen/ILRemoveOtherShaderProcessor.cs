@@ -58,7 +58,7 @@ namespace UTJ.ShaderVariantStripping.CodeGen
                 return ProcessBody(compiledAssembly);
             }catch(System.Exception e)
             {
-                System.IO.File.WriteAllText(compiledAssembly.Name + "_err.txt", e.Message + "\n" + e.Source + "\n" + e.StackTrace );
+                //System.IO.File.WriteAllText("" + compiledAssembly.Name + "_err.txt", e.Message + "\n" + e.Source + "\n" + e.StackTrace );
                 return new ILPostProcessResult(null, new List<DiagnosticMessage>());
             }
         }
@@ -74,14 +74,18 @@ namespace UTJ.ShaderVariantStripping.CodeGen
             var peData = inMemoryAssembly.PeData;
             var pdbData = inMemoryAssembly.PdbData;
 
+            var resolver = new ILProcessResolver(compiledAssembly);
+
             var readerParameters = new ReaderParameters
             {
+                AssemblyResolver = resolver,
                 SymbolStream = new MemoryStream(compiledAssembly.InMemoryAssembly.PdbData),
                 SymbolReaderProvider = new PortablePdbReaderProvider(),
-                ReadingMode = ReadingMode.Immediate
+                ReadingMode = ReadingMode.Immediate,
             };
-
-           var assemblyDefinition = AssemblyDefinition.ReadAssembly(new MemoryStream(compiledAssembly.InMemoryAssembly.PeData));
+        
+            var assemblyDefinition = AssemblyDefinition.ReadAssembly(new MemoryStream(compiledAssembly.InMemoryAssembly.PeData),readerParameters);
+            resolver.SetSelfAssembly(assemblyDefinition);
             //            assemblyDefinition.modu
             bool isModified = false;
 
