@@ -139,7 +139,6 @@ namespace UTJ.ShaderVariantStripping
             this.orderIntField.SetValueWithoutNotify(int.MaxValue);
         }
 
-
         private void SetupExcludeRules()
         {
             this.collections = StripShaderConfig.GetVariantCollectionAsset();
@@ -157,7 +156,7 @@ namespace UTJ.ShaderVariantStripping
             };
             excludeVariantListView.itemsSource = collections;
 
-            excludeVariantListView.Refresh();
+            excludeVariantListView.Rebuild();
             RefleshExcludeUI();
 
 
