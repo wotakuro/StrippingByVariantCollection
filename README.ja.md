@@ -31,6 +31,9 @@ Strict Variant Strippingが有効になっていないと、こちらの機能�
 ### Script Execute Order
 本アセットのIPreprocessShadersのorder(実行順) を指定します。
 
+### [Debug] List IPreprocessShaders
+IPreprocessShadersを実装した全てのクラスを表示します。
+
 ### Exclude Stripping Rule
 ここで指定されたShaderVariantCollectionアセットは対象外となり、無視します。
 
