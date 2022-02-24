@@ -32,6 +32,9 @@ If Strict Variant Stripping is not enabled, you cannot use this feature.
 ### Script Execute Order
 Setting the order of "IPreprocessShaders" in this asset.
 
+### [Debug] List IPreprocessShaders
+List the all classes that implments IPreprocessShaders.
+
 ### Exclude Stripping Rule
 The ShaderVariantCollection asset specified here will be ignored.
 
