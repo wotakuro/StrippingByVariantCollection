@@ -27,13 +27,15 @@ using UnityEditor.Build;
 using UnityEngine.Rendering;
 using System.Text;
 
-namespace UTJ
+namespace UTJ.ShaderVariantStripping
 {
     public class StrippingByVariantCollection : IPreprocessShaders
     {
-        private bool isInitialized = false;
         private static StrippingByVariantCollection instance;
-        private List<ShaderVariantsInfo> shaderVariants;
+
+        private bool isInitialized = false;
+        private Dictionary<Shader,HashSet<ShaderVariantsInfo> > shaderVariants;
+        private List<ShaderCompilerData> compileResultBuffer;
 
         private class SortShaderKeyword : IComparer<ShaderKeyword>
         {
@@ -45,11 +47,7 @@ namespace UTJ
 
             public int Compare(ShaderKeyword x, ShaderKeyword y)
             {
-#if UNITY_2019_3_OR_NEWER
                 return ShaderKeyword.GetKeywordName(shader,x).CompareTo(ShaderKeyword.GetKeywordName(shader, y));
-#else
-                return x.GetKeywordName().CompareTo(y.GetKeywordName());
-#endif
             }
         }
 
@@ -64,43 +62,336 @@ namespace UTJ
 
             public ShaderVariantsInfo(Shader sh, PassType pass, string[] words)
             {
+                int wordsLength = 0;
+                if (words != null)
+                {
+                    wordsLength = words.Length;
+                }
                 this.shader = sh;
                 this.passType = pass;
                 this.keywords = words;
-                this.keywordInfos = new List<ShaderKeyword>(words.Length);
-                for (int i = 0; i < words.Length; ++i)
+                this.keywordInfos = new List<ShaderKeyword>(wordsLength);
+                for (int i = 0; i < wordsLength; ++i)
                 {
                     if (string.IsNullOrEmpty(words[i])) { continue; }
-#if UNITY_2019 || UNITY_2019_3_OR_NEWER
                     ShaderKeyword shKeyword = new ShaderKeyword(sh, words[i]);
-#else
-                ShaderKeyword shKeyword = new ShaderKeyword(words[i]);
-#endif
                     keywordInfos.Add(shKeyword);
                 }
                 keywordsForCheck = new List<string>();
                 foreach (var keywordInfo in keywordInfos)
                 {
-#if UNITY_2019_3_OR_NEWER
-                    if (!string.IsNullOrEmpty( ShaderKeyword.GetKeywordName(sh, keywordInfo)) &&
-                        ShaderKeyword.GetKeywordType( sh,keywordInfo) != ShaderKeywordType.BuiltinAutoStripped)
+                    if (!string.IsNullOrEmpty(ShaderKeyword.GetKeywordName(sh, keywordInfo)) &&
+                        ShaderKeyword.GetKeywordType(sh, keywordInfo) != ShaderKeywordType.BuiltinDefault)
                     {
-                        keywordsForCheck.Add( ShaderKeyword.GetKeywordName(sh, keywordInfo) );
+                        keywordsForCheck.Add(ShaderKeyword.GetKeywordName(sh, keywordInfo));
                     }
-#else
-                    if (!string.IsNullOrEmpty(keywordInfo.GetKeywordName()) &&
-                        keywordInfo.GetKeywordType() != ShaderKeywordType.BuiltinAutoStripped)
-                    {
-                        keywordsForCheck.Add(keywordInfo.GetKeywordName());
-                    }
-#endif
                 }
                 keywordsForCheck.Sort();
             }
         }
 
-#if DEBUG_LOG_STRIPPING_VARIANT
-        private const string SaveDirectory = "ShaderVariants/Builds";
+        private class ShaderVarintInfoComparerer : IEqualityComparer<ShaderVariantsInfo> { 
+
+            public bool Equals(ShaderVariantsInfo x, ShaderVariantsInfo y)
+            {
+                if (x.shader != y.shader)
+                {
+                    return false;
+                }
+                if (x.passType != y.passType)
+                {
+                    return false;
+                }
+
+                if (x.keywordsForCheck == null && y.keywordsForCheck == null) { return true; }
+                if (x.keywordsForCheck == null) { return false; }
+                if (y.keywordsForCheck == null) { return false; }
+
+                if (x.keywordsForCheck.Count != y.keywordsForCheck.Count) { return false; }
+                int cnt = x.keywordsForCheck.Count;
+                for (int i = 0; i < cnt; ++i)
+                {
+                    if (x.keywordsForCheck[i] != y.keywordsForCheck[i]) { return false; }
+                }
+                return true;
+            }
+
+            public int GetHashCode(ShaderVariantsInfo obj)
+            {
+                int hashCode = 0;
+                if (obj.shader != null)
+                {
+                    hashCode += obj.shader.GetHashCode();
+                }
+                hashCode += obj.passType.GetHashCode();
+                if (obj.keywordsForCheck != null)
+                {
+                    foreach (var keyword in obj.keywordsForCheck)
+                    {
+                        hashCode += keyword.GetHashCode();
+                    }
+                }
+                return hashCode;
+            }
+        }
+
+
+
+
+        public StrippingByVariantCollection()
+        {
+            instance = this;
+            Initialize();
+        }
+
+        public static void ResetData()
+        {
+            if(instance != null)
+            {
+                instance.isInitialized = false;
+            }
+        }
+
+        private void Initialize()
+        {
+            if (isInitialized) { return; }
+            var variantCollections = GetProjectShaderVariantCollections();
+            this.compileResultBuffer = new List<ShaderCompilerData>(1024);
+            this.shaderVariants = new Dictionary<Shader, HashSet<ShaderVariantsInfo>>();
+            foreach (var variantCollection in variantCollections)
+            {
+                CollectVariants(this.shaderVariants, variantCollection);
+            }
+            if (StripShaderConfig.IsLogEnable)
+            {
+                this.InitLogInfo();
+                this.SaveProjectVaraiants();
+            }
+            isInitialized = true;
+        }
+
+        private static List<ShaderVariantCollection> GetProjectShaderVariantCollections()
+        {
+            List<ShaderVariantCollection> collections = new List<ShaderVariantCollection>();
+            var guids = AssetDatabase.FindAssets("t: ShaderVariantCollection");
+            foreach (var guid in guids)
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                var obj = AssetDatabase.LoadAssetAtPath<ShaderVariantCollection>(path);
+                if (obj != null)
+                {
+                    collections.Add(obj);
+                }
+            }
+            var excludeList = StripShaderConfig.GetVariantCollectionAsset();
+            foreach(var exclude in excludeList)
+            {
+                if (exclude != null)
+                {
+                    collections.Remove(exclude);
+                }
+            }
+
+            return collections;
+        }
+
+        private void CollectVariants(Dictionary<Shader, HashSet<ShaderVariantsInfo>> variants,
+            ShaderVariantCollection variantCollection)
+        {
+            var obj = new SerializedObject(variantCollection);
+            var shadersProp = obj.FindProperty("m_Shaders");
+            for (int i = 0; i < shadersProp.arraySize; ++i)
+            {
+                var shaderProp = shadersProp.GetArrayElementAtIndex(i);
+                var shader = shaderProp.FindPropertyRelative("first").objectReferenceValue as Shader;
+
+                var variantsProp = shaderProp.FindPropertyRelative("second.variants");
+                CollectVariants(variants, shader, variantsProp);
+            }
+        }
+
+        private void CollectVariants(Dictionary<Shader, HashSet<ShaderVariantsInfo>> variants, Shader shader, SerializedProperty variantsProp)
+        {
+            HashSet<ShaderVariantsInfo> targetHashset = null;
+            if(!variants.TryGetValue(shader, out targetHashset))
+            {
+                targetHashset = new HashSet<ShaderVariantsInfo>(new ShaderVarintInfoComparerer());
+                variants.Add(shader, targetHashset);
+            }
+
+
+            for (int i = 0; i < variantsProp.arraySize; ++i)
+            {
+                var variantProp = variantsProp.GetArrayElementAtIndex(i);
+                var keywords = variantProp.FindPropertyRelative("keywords").stringValue;
+                var passType = variantProp.FindPropertyRelative("passType").intValue;
+
+                string[] keywordsArray = null;
+                if (keywords != null)
+                {
+                    keywords = keywords.Trim();
+                }
+                if (string.IsNullOrEmpty(keywords))
+                {
+                    keywordsArray = new string[] { "" };
+                }
+                else
+                {
+                    keywordsArray = keywords.Split(' ');
+                }
+                ShaderVariantsInfo variant = new ShaderVariantsInfo(shader, (PassType)passType, keywordsArray);
+                if (!targetHashset.Contains(variant))
+                {
+                    targetHashset.Add(variant);
+                }
+            }
+        }
+
+
+        private bool IsExistShader(Dictionary<Shader, HashSet<ShaderVariantsInfo>> shaderVariants, Shader shader)
+        {
+            HashSet<ShaderVariantsInfo> variantsHashSet = null;
+            if( shaderVariants.TryGetValue(shader, out variantsHashSet) )
+            {
+                return (variantsHashSet.Count > 0) ;
+            }
+            return false;
+        }
+
+        private bool IsExist(Dictionary<Shader, HashSet<ShaderVariantsInfo>> shaderVariants,
+            Shader shader, ShaderSnippetData snippet, ShaderCompilerData data)
+        {
+            var keywords = data.shaderKeywordSet.GetShaderKeywords();
+            var compiledKeyword = Convert(shader,keywords);
+            var targetInfo = new ShaderVariantsInfo(shader, snippet.passType, compiledKeyword.ToArray() );
+
+            if (compiledKeyword.Count == 0)
+            {
+                return true;
+            }
+            HashSet<ShaderVariantsInfo> variantsHashSet = null;
+            if (shaderVariants.TryGetValue(shader, out variantsHashSet))
+            {
+                bool flag =  (variantsHashSet.Contains(targetInfo) );
+                return flag;
+            }
+            return false;
+        }
+
+        private List<string> Convert(Shader shader, ShaderKeyword[] keywords)
+        {
+            List<string> converted = new List<string>(keywords.Length);
+            for (int i = 0; i < keywords.Length; ++i)
+            {
+                if (!string.IsNullOrEmpty( ShaderKeyword.GetKeywordName(shader, keywords[i]) ) &&
+                    ShaderKeyword.GetKeywordType(shader,keywords[i]) != ShaderKeywordType.BuiltinDefault)
+                {
+                    converted.Add(ShaderKeyword.GetKeywordName(shader, keywords[i]));
+                }
+            }
+            converted.Sort();
+            return converted;
+        }
+
+        public int callbackOrder
+        {
+            get
+            {
+                return StripShaderConfig.Order;
+            }
+        }
+
+        public void OnProcessShader(Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> shaderCompilerData)
+        {
+
+            this.Initialize();
+
+            if (!StripShaderConfig.IsEnable)
+            {
+                LogAllInVariantColllection(shader, snippet, shaderCompilerData);
+                return;
+            }
+            double startTime = EditorApplication.timeSinceStartup;
+            int startVariants = shaderCompilerData.Count;
+
+            
+            this.includeVariantsBuffer.Length = 0;
+            this.excludeVariantsBuffer.Length = 0;
+
+            bool isExistShader = IsExistShader(this.shaderVariants, shader);
+            if (!isExistShader)
+            {
+                if (StripShaderConfig.StrictVariantStripping)
+                {
+                    if (StripShaderConfig.IsLogEnable)
+                    {
+                        LogNotInVariantColllection(shader, snippet, shaderCompilerData);
+                    }
+                    shaderCompilerData.Clear();
+                }
+                else if (StripShaderConfig.IsLogEnable)
+                {
+                    LogAllInVariantColllection(shader, snippet, shaderCompilerData);
+                }
+                return;
+            }
+
+            this.compileResultBuffer.Clear();
+            for (int i = 0; i < shaderCompilerData.Count; ++i)
+            {
+                bool isExistsVariant = IsExist(this.shaderVariants, shader, snippet, shaderCompilerData[i]);
+
+                if (StripShaderConfig.IsLogEnable)
+                {
+                    if (isExistsVariant)
+                    {
+                        AppendShaderInfo(includeVariantsBuffer, shader, snippet, shaderCompilerData[i]);
+                    }
+                    else
+                    {
+                        AppendShaderInfo(excludeVariantsBuffer, shader, snippet, shaderCompilerData[i]);
+                    }
+                }
+
+                if (isExistsVariant)
+                {
+                    this.compileResultBuffer.Add(shaderCompilerData[i]);
+                }
+            }
+
+            shaderCompilerData.Clear();
+            foreach (var data in this.compileResultBuffer)
+            {
+                shaderCompilerData.Add(data);
+            }
+
+            if (StripShaderConfig.IsLogEnable)
+            {
+
+                double endTime = EditorApplication.timeSinceStartup;
+                int endVariants = shaderCompilerData.Count;
+
+                string dir = LogDirectory + "/" + dateTimeStr;
+                if (!System.IO.Directory.Exists(dir))
+                {
+                    System.IO.Directory.CreateDirectory(dir);
+                }
+                System.IO.File.AppendAllText(dir + "/" + shader.name.Replace("/", "_") + "_execute.log",
+                    "ExecuteTime:" + (endTime - startTime) + " sec\n" +
+                    "Variants:" + startVariants + "->" + endVariants + "\n");
+
+                var data = new ShaderInfoData(shader, snippet);
+                if (!alreadyWriteShader.Contains(data))
+                {
+                    SaveResult(shader, snippet);
+                    alreadyWriteShader.Add(data);
+                }
+            }
+        }
+
+
+        #region LOGGING
+        private const string LogDirectory = "ShaderVariants/Builds";
 
         private string dateTimeStr;
 
@@ -145,226 +436,6 @@ namespace UTJ
         }
 
         private HashSet<ShaderInfoData> alreadyWriteShader = new HashSet<ShaderInfoData>();
-#endif
-
-        public StrippingByVariantCollection()
-        {
-            instance = this;
-            Initialize();
-        }
-
-        public static void ResetData()
-        {
-            if(instance != null)
-            {
-                instance.isInitialized = false;
-            }
-        }
-
-        private void Initialize()
-        {
-            if (isInitialized) { return; }
-            var variantCollections = GetProjectShaderVariantCollections();
-            this.shaderVariants = new List<ShaderVariantsInfo>();
-            foreach (var variantCollection in variantCollections)
-            {
-                CollectVariants(this.shaderVariants, variantCollection);
-            }
-#if DEBUG_LOG_STRIPPING_VARIANT
-            this.InitLogInfo();
-            this.SaveProjectVaraiants();
-#endif
-            isInitialized = true;
-        }
-
-        private static List<ShaderVariantCollection> GetProjectShaderVariantCollections()
-        {
-            List<ShaderVariantCollection> collections = new List<ShaderVariantCollection>();
-            var guids = AssetDatabase.FindAssets("t: ShaderVariantCollection");
-            foreach (var guid in guids)
-            {
-                var path = AssetDatabase.GUIDToAssetPath(guid);
-                var obj = AssetDatabase.LoadAssetAtPath<ShaderVariantCollection>(path);
-                if (obj != null)
-                {
-                    collections.Add(obj);
-                }
-            }
-            return collections;
-        }
-
-        private void CollectVariants(List<ShaderVariantsInfo> shaderVariants,
-            ShaderVariantCollection variantCollection)
-        {
-            var obj = new SerializedObject(variantCollection);
-            var shadersProp = obj.FindProperty("m_Shaders");
-            for (int i = 0; i < shadersProp.arraySize; ++i)
-            {
-                var shaderProp = shadersProp.GetArrayElementAtIndex(i);
-                var shader = shaderProp.FindPropertyRelative("first").objectReferenceValue as Shader;
-
-                var variantsProp = shaderProp.FindPropertyRelative("second.variants");
-                CollectVariants(shaderVariants, shader, variantsProp);
-            }
-        }
-
-        private void CollectVariants(List<ShaderVariantsInfo> shaderVariants, Shader shader, SerializedProperty variantsProp)
-        {
-            for (int i = 0; i < variantsProp.arraySize; ++i)
-            {
-                var variantProp = variantsProp.GetArrayElementAtIndex(i);
-                var keywords = variantProp.FindPropertyRelative("keywords").stringValue;
-                var passType = variantProp.FindPropertyRelative("passType").intValue;
-
-                string[] keywordsArray = null;
-                if (keywords != null)
-                {
-                    keywords = keywords.Trim();
-                }
-                if (string.IsNullOrEmpty(keywords))
-                {
-                    keywordsArray = new string[] { "" };
-                }
-                else
-                {
-                    keywordsArray = keywords.Split(' ');
-                }
-                ShaderVariantsInfo variant = new ShaderVariantsInfo(shader, (PassType)passType, keywordsArray);
-                shaderVariants.Add(variant);
-            }
-        }
-
-
-        private bool IsExistShader(List<ShaderVariantsInfo> shaderVariants, Shader shader)
-        {
-            foreach (var variant in shaderVariants)
-            {
-                if (variant.shader == shader)
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private bool IsExist(List<ShaderVariantsInfo> shaderVariants,
-            Shader shader, ShaderSnippetData snippet, ShaderCompilerData data)
-        {
-            var keywords = data.shaderKeywordSet.GetShaderKeywords();
-            var compiledKeyword = Convert(shader,keywords);
-
-            if (compiledKeyword.Count == 0)
-            {
-                return true;
-            }
-            foreach (var variant in shaderVariants)
-            {
-                if (variant.shader != shader)
-                {
-                    continue;
-                }
-                if (variant.passType != snippet.passType)
-                {
-                    continue;
-                }
-                if (IsMatch(variant.keywordsForCheck, compiledKeyword))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private bool IsMatch(List<string> a, List<string> b)
-        {
-            if (a.Count != b.Count) { return false; }
-
-            for (int i = 0; i < a.Count; ++i)
-            {
-                if (a[i] != b[i]) { return false; }
-            }
-            return true;
-        }
-        private List<string> Convert(Shader shader, ShaderKeyword[] keywords)
-        {
-            List<string> converted = new List<string>(keywords.Length);
-            for (int i = 0; i < keywords.Length; ++i)
-            {
-#if UNITY_2019_3_OR_NEWER
-                if (!string.IsNullOrEmpty( ShaderKeyword.GetKeywordName(shader, keywords[i]) ) &&
-                    ShaderKeyword.GetKeywordType(shader,keywords[i]) != ShaderKeywordType.BuiltinAutoStripped)
-                {
-                    converted.Add(ShaderKeyword.GetKeywordName(shader, keywords[i]));
-                }
-#else
-                if (!string.IsNullOrEmpty(keywords[i].GetKeywordName()) &&
-                    keywords[i].GetKeywordType() != ShaderKeywordType.BuiltinAutoStripped)
-                {
-                    converted.Add(keywords[i].GetKeywordName());
-                }
-#endif
-            }
-            converted.Sort();
-            return converted;
-        }
-
-        public int callbackOrder
-        {
-            get
-            {
-                return int.MaxValue;
-            }
-        }
-
-        public void OnProcessShader(Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> shaderCompilerData)
-        {
-            this.Initialize();
-
-#if DEBUG_LOG_STRIPPING_VARIANT
-            this.includeVariantsBuffer.Length = 0;
-            this.excludeVariantsBuffer.Length = 0;
-#endif
-            bool isExistShader = IsExistShader(this.shaderVariants, shader);
-            for (int i = 0; i < shaderCompilerData.Count; ++i)
-            {
-                bool shouldRemove = false;
-                if (isExistShader && StripEnableChecker.IsEnable)
-                {
-                    bool isExistsVariant = IsExist(this.shaderVariants, shader, snippet, shaderCompilerData[i]);
-                    shouldRemove = !isExistsVariant;
-                }
-#if DEBUG_LOG_STRIPPING_VARIANT
-                if (shouldRemove)
-                {
-                    AppendShaderInfo(excludeVariantsBuffer, shader, snippet, shaderCompilerData[i]);
-                }
-                else
-                {
-                    AppendShaderInfo(includeVariantsBuffer, shader, snippet, shaderCompilerData[i]);
-                }
-#endif
-
-                if (shouldRemove)
-                {
-                    shaderCompilerData.RemoveAt(i);
-                    --i;
-                }
-            }
-#if DEBUG_LOG_STRIPPING_VARIANT
-            var data = new ShaderInfoData(shader, snippet);
-            if (!alreadyWriteShader.Contains(data))
-            {
-                SaveResult(shader, snippet);
-                alreadyWriteShader.Add(data);
-            }
-#endif
-        }
-
-
-
-
-
-#if DEBUG_LOG_STRIPPING_VARIANT
 
         private void InitLogInfo()
         {
@@ -382,7 +453,14 @@ namespace UTJ
 
         private void SaveProjectVaraiants()
         {
-            var list = new List<ShaderVariantsInfo>(shaderVariants);
+            var list = new List<ShaderVariantsInfo>(1024);
+            foreach(var variantHashSet in this.shaderVariants.Values)
+            {
+                foreach(var val in variantHashSet)
+                {
+                    list.Add(val);
+                }
+            }
             list.Sort((a, b) =>
             {
                 int shaderName = a.shader.name.CompareTo(b.shader.name);
@@ -436,7 +514,7 @@ namespace UTJ
                 projectVaritantsBuffer.Append("\n\n");
             }
 
-            string dir = SaveDirectory + "/" + dateTimeStr;
+            string dir = LogDirectory + "/" + dateTimeStr;
             if (!System.IO.Directory.Exists(dir))
             {
                 System.IO.Directory.CreateDirectory(dir);
@@ -447,8 +525,8 @@ namespace UTJ
         private void SaveResult(Shader shader, ShaderSnippetData snippet)
         {
             string shaderName = shader.name.Replace("/", "_");
-            string includeDir = SaveDirectory + "/" + dateTimeStr + "/Include/" + shaderName;
-            string excludeDir = SaveDirectory + "/" + dateTimeStr + "/Exclude/" + shaderName;
+            string includeDir = LogDirectory + "/" + dateTimeStr + "/Include/" + shaderName;
+            string excludeDir = LogDirectory + "/" + dateTimeStr + "/Exclude/" + shaderName;
             string name = shaderName + "_" + snippet.shaderType.ToString() + "_" + snippet.passName + "_" + snippet.passType;
 
             if (includeVariantsBuffer.Length != 0)
@@ -457,7 +535,8 @@ namespace UTJ
                 {
                     System.IO.Directory.CreateDirectory(includeDir);
                 }
-                System.IO.File.WriteAllText(System.IO.Path.Combine(includeDir, name) + ".txt", includeVariantsBuffer.ToString());
+                this.includeVariantsBuffer.Append("\n==================\n");
+                System.IO.File.AppendAllText(System.IO.Path.Combine(includeDir, name) + ".txt", includeVariantsBuffer.ToString());
             }
             if (excludeVariantsBuffer.Length != 0)
             {
@@ -465,7 +544,8 @@ namespace UTJ
                 {
                     System.IO.Directory.CreateDirectory(excludeDir);
                 }
-                System.IO.File.WriteAllText(System.IO.Path.Combine(excludeDir, name) + ".txt", excludeVariantsBuffer.ToString());
+                this.excludeVariantsBuffer.Append("\n==================\n");
+                System.IO.File.AppendAllText(System.IO.Path.Combine(excludeDir, name) + ".txt", excludeVariantsBuffer.ToString());
             }
         }
 
@@ -490,31 +570,61 @@ namespace UTJ
             sb.Append(" Keyword:");
             foreach (var keyword in sortKeywords)
             {
-#if UNITY_2019_3_OR_NEWER
                 sb.Append( ShaderKeyword.GetKeywordName(shader,keyword)).Append(" ");
-#else
-                sb.Append(keyword.GetKeywordName()).Append(" ");
-#endif
             }
 
             sb.Append("\n KeywordType:");
             foreach (var keyword in sortKeywords)
             {
-#if UNITY_2019_3_OR_NEWER
                 sb.Append(ShaderKeyword.GetKeywordType(shader, keyword)).Append(" ");
-#else
-                sb.Append(keyword.GetKeywordType()).Append(" ");
-#endif
             }
-#if UNITY_2019_3_OR_NEWER
             sb.Append("\n IsLocalkeyword:");
             foreach (var keyword in sortKeywords)
             {
                 sb.Append(ShaderKeyword.IsKeywordLocal(keyword)).Append(" ");
             }
-#endif
             sb.Append("\n").Append("\n");
         }
-#endif
+
+
+
+        private void LogAllInVariantColllection(Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> shaderCompilerData)
+        {
+
+            for (int i = 0; i < shaderCompilerData.Count; ++i)
+            {
+                AppendShaderInfo(includeVariantsBuffer, shader, snippet, shaderCompilerData[i]);
+            }
+            this.includeVariantsBuffer.Append("\n==================\n");
+
+            string shaderName = shader.name.Replace("/", "_");
+            string name = shaderName + "_" + snippet.shaderType.ToString() + "_" + snippet.passName + "_" + snippet.passType;
+            string includeDir = LogDirectory + "/" + dateTimeStr + "/Include/" + shaderName;
+            if (!System.IO.Directory.Exists(includeDir))
+            {
+                System.IO.Directory.CreateDirectory(includeDir);
+            }
+            System.IO.File.AppendAllText(System.IO.Path.Combine(includeDir, name) + ".txt", includeVariantsBuffer.ToString());
+        }
+        private void LogNotInVariantColllection(Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> shaderCompilerData)
+        {
+
+            for (int i = 0; i < shaderCompilerData.Count; ++i)
+            {
+                AppendShaderInfo(excludeVariantsBuffer, shader, snippet, shaderCompilerData[i]);
+            }
+            this.excludeVariantsBuffer.Append("\n==================\n");
+
+            string shaderName = shader.name.Replace("/", "_");
+            string name = shaderName + "_" + snippet.shaderType.ToString() + "_" + snippet.passName + "_" + snippet.passType;
+            string excludeDir = LogDirectory + "/" + dateTimeStr + "/Exclude/" + shaderName;
+
+            if (!System.IO.Directory.Exists(excludeDir))
+            {
+                System.IO.Directory.CreateDirectory(excludeDir);
+            }
+            System.IO.File.AppendAllText(System.IO.Path.Combine(excludeDir, name) + ".txt", excludeVariantsBuffer.ToString());
+        }
+        #endregion LOGGING
     }
 }

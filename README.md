@@ -1,17 +1,44 @@
 # StrippingByVariantCollection
+[日本語はコチラ](README.ja.md)
 
-プロジェクト内にあるShaderVariantCollectionを探してきて、登録されていないVariantはすべてビルドから除外します。<br />
-ShaderVariantCollectionにシェーダーを登録していなかった場合は何もしません。
+Find the ShaderVariantCollection in the project and exclude unregistered variants from the build.
+You can change the behaiour in the settings window (  "UTJ/ShaderVariantStrip"  ).
 
-オン・オフをメニューの「UTJ/ShaderVariantStrip/Enable」のチェックのオン・オフで切替できます。<br />
-ビルドした時に、どのバリアントを入れて、どのバリアントを除外したか？をログとして残します。<br />
-プロジェクト直下の「ShaderVariants/Builds/タイムスタンプ」ディレクトリ以下に書き出します。<br />
+## about Setting Window
+![alt text](Documentation~/ConfigWindow.png)
 
-連続でビルドをする場合などは…。<br />
-タイムスタンプとかの部分をリセットするために「UTJ/ShaderVariantStrip/ResetInfo」を呼び出してください。<br />
+### Enable Stripping
+Set to perform strip processing or not.
+
+### Log Variants
+Specify whether to log which variants are included and which are excluded during the build process. Specify whether you want to keep a log of which variants were included and which were excluded.<br />
+It will be written to the directory "ShaderVariants/Builds/Timestamps" under the project.<br />
+This can be done even if Stripping is disabled.
+
+## 「Reset Timestamp」Button
+There was a possibility that the log timestamp was not reset properly when building consecutively. <br />
+If you find that the log timestamps are not updated properly during continuous build, please press this button.
+
+### Strict Variant Stripping
+When enabled, Shaders that are not in the ShaderVariantCollection will be deleted all Variants.
+When disabled, shaders that are not in the ShaderVariantCollection is not performed by any special strip processing.
+
+
+### Disable Unity Stripping
+Enabling this feature will remove the IPreprocessShaders under the "Unity." or "UnityEngine.".( such as Universal RenderPipeline. )<br />
+If Strict Variant Stripping is not enabled, you cannot use this feature.
+*It's implemented by rewriting IL code.
+
+### Script Execute Order
+Setting the order of "IPreprocessShaders" in this asset.
+
+### [Debug] List IPreprocessShaders
+List the all classes that implments IPreprocessShaders.
+
+### Exclude Stripping Rule
+The ShaderVariantCollection asset specified here will be ignored.
 
 <br />
 
-参考：
-こちらはスクリプタブルシェーダーバリアントの除去を使っています<br />
+Reference：<br />
 https://blogs.unity3d.com/jp/2018/05/14/stripping-scriptable-shader-variants/

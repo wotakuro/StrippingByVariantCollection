@@ -1,16 +1,19 @@
 {
-    "name": "UTJ.StripVariant",
+    "name": "Unity.Editor.RemoveShaderPostProcessor.Codegen",
     "rootNamespace": "",
-    "references": [
-        "GUID:55ce092c730f60c48aee3cca9150085f"
-    ],
+    "references": [],
     "includePlatforms": [
         "Editor"
     ],
     "excludePlatforms": [],
     "allowUnsafeCode": true,
     "overrideReferences": true,
-    "precompiledReferences": [],
+    "precompiledReferences": [
+        "Mono.Cecil.dll",
+        "Mono.Cecil.Mdb.dll",
+        "Mono.Cecil.Pdb.dll",
+        "Mono.Cecil.Rocks.dll"
+    ],
     "autoReferenced": false,
     "defineConstraints": [],
     "versionDefines": [
