@@ -591,6 +591,10 @@ namespace UTJ.ShaderVariantStripping
         private void LogAllInVariantColllection(Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> shaderCompilerData)
         {
 
+            if (!StripShaderConfig.IsLogEnable)
+            {
+                return;
+            }
             for (int i = 0; i < shaderCompilerData.Count; ++i)
             {
                 AppendShaderInfo(includeVariantsBuffer, shader, snippet, shaderCompilerData[i]);
@@ -608,6 +612,10 @@ namespace UTJ.ShaderVariantStripping
         }
         private void LogNotInVariantColllection(Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> shaderCompilerData)
         {
+            if (!StripShaderConfig.IsLogEnable)
+            {
+                return;
+            }
 
             for (int i = 0; i < shaderCompilerData.Count; ++i)
             {

@@ -160,7 +160,6 @@ namespace UTJ.ShaderVariantStripping
             };
             excludeVariantListView.itemsSource = collections;
 
-            excludeVariantListView.Rebuild();
             RefleshExcludeUI();
 
 
