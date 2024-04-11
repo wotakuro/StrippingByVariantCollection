@@ -47,7 +47,11 @@ namespace UTJ.ShaderVariantStripping
 
             public int Compare(ShaderKeyword x, ShaderKeyword y)
             {
+#if UNITY_2021_2_OR_NEWER
+                return x.name.CompareTo(y.name);
+#else
                 return ShaderKeyword.GetKeywordName(shader,x).CompareTo(ShaderKeyword.GetKeywordName(shader, y));
+#endif
             }
         }
 
@@ -80,11 +84,19 @@ namespace UTJ.ShaderVariantStripping
                 keywordsForCheck = new List<string>();
                 foreach (var keywordInfo in keywordInfos)
                 {
+#if UNITY_2022_2_OR_NEWER
+                    if (!string.IsNullOrEmpty(keywordInfo.name) &&
+                        ShaderKeyword.GetGlobalKeywordType(keywordInfo) != ShaderKeywordType.BuiltinDefault)
+                    {
+                        keywordsForCheck.Add(keywordInfo.name);
+                    }
+#else
                     if (!string.IsNullOrEmpty(ShaderKeyword.GetKeywordName(sh, keywordInfo)) &&
                         ShaderKeyword.GetKeywordType(sh, keywordInfo) != ShaderKeywordType.BuiltinDefault)
                     {
                         keywordsForCheck.Add(ShaderKeyword.GetKeywordName(sh, keywordInfo));
                     }
+#endif
                 }
                 keywordsForCheck.Sort();
             }
@@ -283,11 +295,19 @@ namespace UTJ.ShaderVariantStripping
             List<string> converted = new List<string>(keywords.Length);
             for (int i = 0; i < keywords.Length; ++i)
             {
+#if UNITY_2022_2_OR_NEWER
+                if (!string.IsNullOrEmpty( keywords[i].name) &&
+                    ShaderKeyword.GetGlobalKeywordType(keywords[i]) != ShaderKeywordType.BuiltinDefault)
+                {
+                    converted.Add( keywords[i].name);
+                }
+#else
                 if (!string.IsNullOrEmpty( ShaderKeyword.GetKeywordName(shader, keywords[i]) ) &&
                     ShaderKeyword.GetKeywordType(shader,keywords[i]) != ShaderKeywordType.BuiltinDefault)
                 {
                     converted.Add(ShaderKeyword.GetKeywordName(shader, keywords[i]));
                 }
+#endif
             }
             converted.Sort();
             return converted;
@@ -303,7 +323,6 @@ namespace UTJ.ShaderVariantStripping
 
         public void OnProcessShader(Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> shaderCompilerData)
         {
-
             this.Initialize();
 
             if (!StripShaderConfig.IsEnable)
@@ -311,10 +330,13 @@ namespace UTJ.ShaderVariantStripping
                 LogAllInVariantColllection(shader, snippet, shaderCompilerData);
                 return;
             }
+
             double startTime = EditorApplication.timeSinceStartup;
             int startVariants = shaderCompilerData.Count;
 
-            
+            ShaderKeywordMaskGetterPerSnippet maskGetter = new ShaderKeywordMaskGetterPerSnippet(shader, snippet);
+
+
             this.includeVariantsBuffer.Length = 0;
             this.excludeVariantsBuffer.Length = 0;
 
@@ -570,13 +592,21 @@ namespace UTJ.ShaderVariantStripping
             sb.Append(" Keyword:");
             foreach (var keyword in sortKeywords)
             {
+#if UNITY_2021_2_OR_NEWER
+                sb.Append(keyword.name).Append(" ");
+#else
                 sb.Append( ShaderKeyword.GetKeywordName(shader,keyword)).Append(" ");
+#endif
             }
 
             sb.Append("\n KeywordType:");
             foreach (var keyword in sortKeywords)
             {
+#if UNITY_2022_2_OR_NEWER
+                sb.Append(ShaderKeyword.GetGlobalKeywordType(keyword)).Append(" ");
+#else
                 sb.Append(ShaderKeyword.GetKeywordType(shader, keyword)).Append(" ");
+#endif
             }
             sb.Append("\n IsLocalkeyword:");
             foreach (var keyword in sortKeywords)
@@ -633,6 +663,6 @@ namespace UTJ.ShaderVariantStripping
             }
             System.IO.File.AppendAllText(System.IO.Path.Combine(excludeDir, name) + ".txt", excludeVariantsBuffer.ToString());
         }
-        #endregion LOGGING
+#endregion LOGGING
     }
 }
