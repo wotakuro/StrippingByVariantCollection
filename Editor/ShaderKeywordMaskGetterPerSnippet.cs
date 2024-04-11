@@ -33,6 +33,14 @@ namespace UTJ
             int passIndex = (int)snippet.pass.PassIndex;
             ConstructFlag(subShaderIndex, passIndex, ShaderTypeTable[typeIndex]);
         }
+        public bool HasCutoffKeywords()
+        {
+            if(validKeywords == null)
+            {
+                return false;
+            }
+            return (validKeywords.Count != keywords.Count);
+        }
 
         public bool ValidKeyword(string keyword)
         {
@@ -41,6 +49,33 @@ namespace UTJ
                 return true;
             }
             return validKeywords.Contains(keyword);
+        }
+        public string []ConvertValidOnlyKeywords(string[] keywords)
+        {
+            if(keywords == null) { return null; }
+            int validCount = 0;
+            int length = keywords.Length;
+            for(int i= 0; i < length; ++i)
+            {
+                if (ValidKeyword(keywords[i])){
+                    validCount++;
+                }
+            }
+            if(validCount == length)
+            {
+                return null;
+            }
+            var newKeywords = new string[validCount];
+            int index = 0;
+            for (int i = 0; i < length; ++i)
+            {
+                if (ValidKeyword(keywords[i]))
+                {
+                    newKeywords[index] = keywords[i];
+                    ++index;
+                }
+            }
+            return newKeywords;
         }
 
         private static int GetTypeIndex(ShaderType type)
@@ -87,7 +122,7 @@ namespace UTJ
             ExecuteSubShader(subShadersProp.GetArrayElementAtIndex(subShaderIndex), passIndex,typeStr);            
         }
 
-        void ExecuteSubShader(SerializedProperty subShaderProp, int passIndex, string typeStr)
+        private void ExecuteSubShader(SerializedProperty subShaderProp, int passIndex, string typeStr)
         {
             var passesProp = subShaderProp.FindPropertyRelative("m_Passes");
             if (passesProp == null || !passesProp.isArray)
@@ -104,7 +139,7 @@ namespace UTJ
 
         }
 
-        void ExecutePass(SerializedProperty passProp, string typeStr)
+        private void ExecutePass(SerializedProperty passProp, string typeStr)
         {
             var stageProp = passProp.FindPropertyRelative(typeStr);
             if (stageProp == null) { return; }

@@ -37,10 +37,10 @@ namespace UTJ.ShaderVariantStripping
         private Dictionary<Shader,HashSet<ShaderVariantsInfo> > shaderVariants;
         private List<ShaderCompilerData> compileResultBuffer;
 
-        private class SortShaderKeyword : IComparer<ShaderKeyword>
+        private class SortShaderKeywordComparer : IComparer<ShaderKeyword>
         {
             private Shader shader;
-            public SortShaderKeyword(Shader sh)
+            public SortShaderKeywordComparer(Shader sh)
             {
                 this.shader = sh;
             }
@@ -270,24 +270,25 @@ namespace UTJ.ShaderVariantStripping
             return false;
         }
 
-        private bool IsExist(Dictionary<Shader, HashSet<ShaderVariantsInfo>> shaderVariants,
+        private bool IsExist(HashSet<ShaderVariantsInfo> variantsHashSet,
             Shader shader, ShaderSnippetData snippet, ShaderCompilerData data)
         {
             var keywords = data.shaderKeywordSet.GetShaderKeywords();
-            var compiledKeyword = Convert(shader,keywords);
-            var targetInfo = new ShaderVariantsInfo(shader, snippet.passType, compiledKeyword.ToArray() );
+            var compiledKeyword = Convert(shader, keywords);
 
+            // have to include no keyword set.
             if (compiledKeyword.Count == 0)
             {
                 return true;
             }
-            HashSet<ShaderVariantsInfo> variantsHashSet = null;
-            if (shaderVariants.TryGetValue(shader, out variantsHashSet))
+
+            var targetInfo = new ShaderVariantsInfo(shader, snippet.passType, compiledKeyword.ToArray());
+            if (variantsHashSet == null)
             {
-                bool flag =  (variantsHashSet.Contains(targetInfo) );
-                return flag;
+                return false;
             }
-            return false;
+            bool flag = (variantsHashSet.Contains(targetInfo));
+            return flag;
         }
 
         private List<string> Convert(Shader shader, ShaderKeyword[] keywords)
@@ -311,6 +312,27 @@ namespace UTJ.ShaderVariantStripping
             }
             converted.Sort();
             return converted;
+        }
+
+        private HashSet<ShaderVariantsInfo> CreateCurrentStageVariantsInfo(HashSet<ShaderVariantsInfo> origin,
+            ShaderKeywordMaskGetterPerSnippet maskGetter)
+        {
+            // todo
+            if (!maskGetter.HasCutoffKeywords() )
+            {
+                return origin;
+            }
+            HashSet< ShaderVariantsInfo > copyData = new HashSet<ShaderVariantsInfo >(origin);
+            foreach(var info in origin)
+            {
+                var newKeywords = maskGetter.ConvertValidOnlyKeywords(info.keywords);
+                if(newKeywords == null) { continue; }
+                var newVariant = new ShaderVariantsInfo(info.shader, info.passType, newKeywords);
+                if(!copyData.Contains(newVariant)){
+                    copyData.Add(newVariant);
+                }
+            }
+            return copyData;
         }
 
         public int callbackOrder
@@ -358,10 +380,19 @@ namespace UTJ.ShaderVariantStripping
                 return;
             }
 
+            HashSet<ShaderVariantsInfo> variantsHashSet = null;
+            if (shaderVariants.TryGetValue(shader, out variantsHashSet))
+            {
+                variantsHashSet = CreateCurrentStageVariantsInfo(variantsHashSet, maskGetter);
+            }
+            else
+            {
+                variantsHashSet = null;
+            }
             this.compileResultBuffer.Clear();
             for (int i = 0; i < shaderCompilerData.Count; ++i)
             {
-                bool isExistsVariant = IsExist(this.shaderVariants, shader, snippet, shaderCompilerData[i]);
+                bool isExistsVariant = IsExist(variantsHashSet, shader, snippet, shaderCompilerData[i]);
 
                 if (StripShaderConfig.IsLogEnable)
                 {
@@ -588,7 +619,7 @@ namespace UTJ.ShaderVariantStripping
             {
                 sortKeywords[i] = keywords[i];
             }
-            System.Array.Sort(sortKeywords, new SortShaderKeyword(shader));
+            System.Array.Sort(sortKeywords, new SortShaderKeywordComparer(shader));
             sb.Append(" Keyword:");
             foreach (var keyword in sortKeywords)
             {
