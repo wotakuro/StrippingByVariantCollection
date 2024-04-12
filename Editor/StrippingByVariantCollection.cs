@@ -17,7 +17,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-#define DEBUG_LOG_STRIPPING_VARIANT
+///#define DEBUG_LOG_STRIPPING_VARIANT
 
 using System.Collections.Generic;
 using UnityEngine;
@@ -325,7 +325,6 @@ namespace UTJ.ShaderVariantStripping
             return converted;
         }
 
-
         private HashSet<ShaderVariantsInfo> CreateCurrentStageVariantsInfo(HashSet<ShaderVariantsInfo> origin,
             ShaderKeywordMaskGetterPerSnippet maskGetter)
         {
@@ -337,7 +336,9 @@ namespace UTJ.ShaderVariantStripping
             foreach(var info in origin)
             {
                 var newKeywords = maskGetter.ConvertValidOnlyKeywords(info.keywords);
-                if(newKeywords == null) { continue; }
+                if(newKeywords == null) { 
+                    continue;
+                }
                 var newVariant = new ShaderVariantsInfo(info.shader, info.passType, newKeywords);
                 if(!copyData.Contains(newVariant)){
                     copyData.Add(newVariant);
@@ -356,7 +357,7 @@ namespace UTJ.ShaderVariantStripping
                 Append(data.pass.PassIndex).Append("\n");
             stringBuilder.Append("PassType:").Append(data.passType).Append("\n");
             stringBuilder.Append("ShaderType:").Append(data.shaderType).Append("\n");
-            stringBuilder.Append("KeywordList");
+            stringBuilder.Append("KeywordList ").Append(variants.Count).Append("\n");
             foreach (var info in variants)
             {
                 foreach (var keyword in info.keywords)

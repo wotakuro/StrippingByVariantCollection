@@ -64,7 +64,7 @@ namespace UTJ
             stringBuilder.Append("PassIndex:").Append(snippetData.pass.PassIndex).Append("\n");
             stringBuilder.Append("PassType:").Append(snippetData.passType).Append("\n");
             stringBuilder.Append("PassName:").Append(snippetData.passName).Append("\n");
-            stringBuilder.Append("Keywords:").Append("\n");
+            stringBuilder.Append("Keywords:").Append(keywords.Count).Append("\n");
             foreach ( var keyword in this.keywords)
             {
                 bool validFlag = this.ValidKeyword(keyword);
@@ -92,7 +92,7 @@ namespace UTJ
                     validCount++;
                 }
             }
-            if(validCount == length)
+            if(validCount == length || validCount == 0)
             {
                 return null;
             }
