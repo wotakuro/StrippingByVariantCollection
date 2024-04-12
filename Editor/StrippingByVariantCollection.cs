@@ -26,6 +26,7 @@ using UnityEditor.Rendering;
 using UnityEditor.Build;
 using UnityEngine.Rendering;
 using System.Text;
+using static UnityEngine.UI.Image;
 
 namespace UTJ.ShaderVariantStripping
 {
@@ -85,8 +86,7 @@ namespace UTJ.ShaderVariantStripping
                 foreach (var keywordInfo in keywordInfos)
                 {
 #if UNITY_2022_2_OR_NEWER
-                    if (!string.IsNullOrEmpty(keywordInfo.name) &&
-                        ShaderKeyword.GetGlobalKeywordType(keywordInfo) != ShaderKeywordType.BuiltinDefault)
+                    if (!string.IsNullOrEmpty(keywordInfo.name) )
                     {
                         keywordsForCheck.Add(keywordInfo.name);
                     }
@@ -297,8 +297,7 @@ namespace UTJ.ShaderVariantStripping
             for (int i = 0; i < keywords.Length; ++i)
             {
 #if UNITY_2022_2_OR_NEWER
-                if (!string.IsNullOrEmpty( keywords[i].name) &&
-                    ShaderKeyword.GetGlobalKeywordType(keywords[i]) != ShaderKeywordType.BuiltinDefault)
+                if (!string.IsNullOrEmpty( keywords[i].name) )
                 {
                     converted.Add( keywords[i].name);
                 }
@@ -317,7 +316,6 @@ namespace UTJ.ShaderVariantStripping
         private HashSet<ShaderVariantsInfo> CreateCurrentStageVariantsInfo(HashSet<ShaderVariantsInfo> origin,
             ShaderKeywordMaskGetterPerSnippet maskGetter)
         {
-            // todo
             if (!maskGetter.HasCutoffKeywords() )
             {
                 return origin;
@@ -334,6 +332,29 @@ namespace UTJ.ShaderVariantStripping
             }
             return copyData;
         }
+
+#if DEBUG_LOG_STRIPPING_VARIANT
+        void LogShaderVariantsInfo(string header,Shader shader,ShaderSnippetData data, HashSet<ShaderVariantsInfo> variants)
+        {
+            StringBuilder stringBuilder = new StringBuilder(1024);
+            stringBuilder.Append("---------------").Append(header).AppendLine("---------------");
+            stringBuilder.Append("Shader:").AppendLine(shader.name);
+            stringBuilder.Append("SubShader-Pass:").Append(data.pass.SubshaderIndex).Append("-").
+                Append(data.pass.PassIndex).Append("\n");
+            stringBuilder.Append("PassType:").Append(data.passType).Append("\n");
+            stringBuilder.Append("ShaderType:").Append(data.shaderType).Append("\n");
+            stringBuilder.Append("KeywordList");
+            foreach (var info in variants)
+            {
+                foreach (var keyword in info.keywords)
+                {
+                    stringBuilder.Append(keyword).Append(" ");
+                }
+                stringBuilder.Append("\n");
+            }
+            System.IO.File.AppendAllText("variant_log.txt", stringBuilder.ToString());
+        }
+#endif
 
         public int callbackOrder
         {
@@ -383,7 +404,13 @@ namespace UTJ.ShaderVariantStripping
             HashSet<ShaderVariantsInfo> variantsHashSet = null;
             if (shaderVariants.TryGetValue(shader, out variantsHashSet))
             {
+#if DEBUG_LOG_STRIPPING_VARIANT
+                LogShaderVariantsInfo("Before", shader, snippet, variantsHashSet);
+#endif
                 variantsHashSet = CreateCurrentStageVariantsInfo(variantsHashSet, maskGetter);
+#if DEBUG_LOG_STRIPPING_VARIANT
+                LogShaderVariantsInfo("After", shader, snippet, variantsHashSet);
+#endif
             }
             else
             {
@@ -437,6 +464,7 @@ namespace UTJ.ShaderVariantStripping
                 if (!alreadyWriteShader.Contains(data))
                 {
                     SaveResult(shader, snippet);
+                    LogKeywordMask(maskGetter);
                     alreadyWriteShader.Add(data);
                 }
             }
@@ -602,6 +630,18 @@ namespace UTJ.ShaderVariantStripping
             }
         }
 
+        private void LogKeywordMask(ShaderKeywordMaskGetterPerSnippet maskGetter)
+        {
+            string maskLogDir = LogDirectory + "/" + dateTimeStr + "/KeywordLog/" ;
+
+            if (!System.IO.Directory.Exists(maskLogDir))
+            {
+                System.IO.Directory.CreateDirectory(maskLogDir);
+            }
+            var path = System.IO.Path.Combine(maskLogDir, maskGetter.LogFileName);
+            System.IO.File.AppendAllText(path, maskGetter.GetLogStr());
+        }
+
         private void AppendShaderInfo(StringBuilder sb, Shader shader, ShaderSnippetData snippet, ShaderCompilerData compilerData)
         {
             if (sb.Length == 0)
@@ -630,20 +670,63 @@ namespace UTJ.ShaderVariantStripping
 #endif
             }
 
+
+
             sb.Append("\n KeywordType:");
             foreach (var keyword in sortKeywords)
             {
 #if UNITY_2022_2_OR_NEWER
-                sb.Append(ShaderKeyword.GetGlobalKeywordType(keyword)).Append(" ");
+                if (!ShaderKeyword.IsKeywordLocal(keyword))
+                {
+                    sb.Append(ShaderKeyword.GetGlobalKeywordType(keyword)).Append(" ");
+                }
+                else
+                {
+                    var localKeyword = new LocalKeyword(shader, keyword.name);
+                    sb.Append(localKeyword.type).Append(" ");
+                }
 #else
                 sb.Append(ShaderKeyword.GetKeywordType(shader, keyword)).Append(" ");
 #endif
             }
+
+
+#if UNITY_2022_2_OR_NEWER
+            sb.Append("\n LocalkeywordInfo:");
+            foreach (var keyword in sortKeywords)
+            {
+                if (!ShaderKeyword.IsKeywordLocal(keyword))
+                {
+                    sb.Append("Global ");
+                }
+                else
+                {
+                    var localKeyword = new LocalKeyword(shader, keyword.name);
+                    if (localKeyword.isDynamic)
+                    {
+                        sb.Append("Dynamic-");
+                    }
+                    else
+                    {
+                        sb.Append("Static-");
+                    }
+                    if (localKeyword.isOverridable)
+                    {
+                        sb.Append("isOverridable ");
+                    }
+                    else
+                    {
+                        sb.Append("nonOverridable ");
+                    }
+                }
+            }
+#else
             sb.Append("\n IsLocalkeyword:");
             foreach (var keyword in sortKeywords)
             {
                 sb.Append(ShaderKeyword.IsKeywordLocal(keyword)).Append(" ");
             }
+#endif
             sb.Append("\n").Append("\n");
         }
 

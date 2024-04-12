@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.Rendering;
+using System.Text;
+using System.Linq;
 
 namespace UTJ
 {
@@ -24,10 +26,12 @@ namespace UTJ
         private HashSet<string> validKeywords;
         private List<string> keywords;
         private Shader shader;
+        private ShaderSnippetData snippetData;
 
         public ShaderKeywordMaskGetterPerSnippet(Shader sh, ShaderSnippetData snippet)
         {
             this.shader = sh;
+            this.snippetData = snippet;
             int typeIndex = GetTypeIndex(snippet.shaderType);
             int subShaderIndex = (int)snippet.pass.SubshaderIndex;
             int passIndex = (int)snippet.pass.PassIndex;
@@ -40,6 +44,33 @@ namespace UTJ
                 return false;
             }
             return (validKeywords.Count != keywords.Count);
+        }
+
+        public string LogFileName
+        {
+            get
+            {
+                return this.shader.name.Replace("/", "_") +"-"+ this.snippetData.shaderType + "-" +
+                    this.snippetData.pass.SubshaderIndex + "-" + this.snippetData.pass.PassIndex + ".txt";
+            }
+        }
+
+        public string GetLogStr()
+        {
+            StringBuilder stringBuilder = new StringBuilder(1024);
+            stringBuilder.Append("Shader:").Append(shader.name).Append("\n");
+            stringBuilder.Append("ShaderType:").Append(snippetData.shaderType).Append("\n");
+            stringBuilder.Append("SubShaderIndex:").Append(snippetData.pass.SubshaderIndex).Append("\n");
+            stringBuilder.Append("PassIndex:").Append(snippetData.pass.PassIndex).Append("\n");
+            stringBuilder.Append("PassType:").Append(snippetData.passType).Append("\n");
+            stringBuilder.Append("PassName:").Append(snippetData.passName).Append("\n");
+            stringBuilder.Append("Keywords:").Append("\n");
+            foreach ( var keyword in this.keywords)
+            {
+                bool validFlag = this.ValidKeyword(keyword);
+                stringBuilder.Append("  ").Append(keyword).Append(":").Append(validFlag).Append("\n");
+            }
+            return stringBuilder.ToString();
         }
 
         public bool ValidKeyword(string keyword)
