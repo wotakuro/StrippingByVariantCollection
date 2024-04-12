@@ -115,15 +115,25 @@ namespace UTJ.ShaderVariantStripping
                     return false;
                 }
 
-                if (x.keywordsForCheck == null && y.keywordsForCheck == null) { return true; }
-                if (x.keywordsForCheck == null) { return false; }
-                if (y.keywordsForCheck == null) { return false; }
+                if (x.keywordsForCheck == null && y.keywordsForCheck == null) { 
+                    return true; 
+                }
+                if (x.keywordsForCheck == null) { 
+                    return false;
+                }
+                if (y.keywordsForCheck == null) { 
+                    return false;
+                }
 
-                if (x.keywordsForCheck.Count != y.keywordsForCheck.Count) { return false; }
+                if (x.keywordsForCheck.Count != y.keywordsForCheck.Count) { 
+                    return false;
+                }
                 int cnt = x.keywordsForCheck.Count;
                 for (int i = 0; i < cnt; ++i)
                 {
-                    if (x.keywordsForCheck[i] != y.keywordsForCheck[i]) { return false; }
+                    if (x.keywordsForCheck[i] != y.keywordsForCheck[i]) {
+                        return false; 
+                    }
                 }
                 return true;
             }
@@ -285,9 +295,11 @@ namespace UTJ.ShaderVariantStripping
             var targetInfo = new ShaderVariantsInfo(shader, snippet.passType, compiledKeyword.ToArray());
             if (variantsHashSet == null)
             {
+                Debug.LogError("variantHashSet is null");
                 return false;
             }
             bool flag = (variantsHashSet.Contains(targetInfo));
+
             return flag;
         }
 
@@ -313,6 +325,7 @@ namespace UTJ.ShaderVariantStripping
             return converted;
         }
 
+
         private HashSet<ShaderVariantsInfo> CreateCurrentStageVariantsInfo(HashSet<ShaderVariantsInfo> origin,
             ShaderKeywordMaskGetterPerSnippet maskGetter)
         {
@@ -320,7 +333,7 @@ namespace UTJ.ShaderVariantStripping
             {
                 return origin;
             }
-            HashSet< ShaderVariantsInfo > copyData = new HashSet<ShaderVariantsInfo >(origin);
+            HashSet< ShaderVariantsInfo > copyData = new HashSet<ShaderVariantsInfo >(origin, new ShaderVarintInfoComparerer() );
             foreach(var info in origin)
             {
                 var newKeywords = maskGetter.ConvertValidOnlyKeywords(info.keywords);
@@ -456,9 +469,15 @@ namespace UTJ.ShaderVariantStripping
                 {
                     System.IO.Directory.CreateDirectory(dir);
                 }
+                var tmpSb = new StringBuilder();
+                tmpSb.Append("Info:").Append(snippet.shaderType).Append(" pass").
+                    Append(snippet.pass.SubshaderIndex).Append("-").Append(snippet.pass.PassIndex).Append(" ").
+                    Append(snippet.passType).Append(" \"").Append(snippet.passName).Append("\"\n");
+                tmpSb.Append("ExecuteTime:").Append(endTime - startTime).Append(" sec\n").
+                    Append("Variants:").Append(startVariants).Append("->").Append(endVariants).Append("\n");
+
                 System.IO.File.AppendAllText(dir + "/" + shader.name.Replace("/", "_") + "_execute.log",
-                    "ExecuteTime:" + (endTime - startTime) + " sec\n" +
-                    "Variants:" + startVariants + "->" + endVariants + "\n");
+                    tmpSb.ToString() );
 
                 var data = new ShaderInfoData(shader, snippet);
                 if (!alreadyWriteShader.Contains(data))
