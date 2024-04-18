@@ -13,9 +13,11 @@
             <ui:Button text="Min" display-tooltip-when-elided="true" name="ExecOrderMinBtn" style="width: 40px;" />
             <ui:Button text="Max" display-tooltip-when-elided="true" name="ExecOrderMaxBtn" style="width: 40px;" />
         </ui:VisualElement>
+        <ui:Toggle label="IgnoreStgeOnlyKeyword" name="IgnoreStgeOnlyKeyword" />
         <ui:Button text="[Debug] List IPreprocessShaders" display-tooltip-when-elided="true" name="DebugListProcessorBtn" style="width: 200px;" />
+        <ui:Button text="[Debug]List ShaderKeywords" parse-escape-sequences="true" display-tooltip-when-elided="true" name="DebugShaderKeywords" style="width: 200px;" />
     </ui:Foldout>
-    <ui:Label text="Exculude Stripping Rule" display-tooltip-when-elided="true" style="margin-left: 10px;" />
+    <ui:Label text="Exculude Stripping Rule" display-tooltip-when-elided="true" name="Label" style="margin-left: 10px;" />
     <ui:ScrollView style="margin-left: 20px;">
         <ui:ListView focusable="true" name="ExcludeList" reorderable="true" item-height="20" />
         <ui:Button text="Add ShaderVariantCollection" display-tooltip-when-elided="true" name="AppendExcludeBtn" />

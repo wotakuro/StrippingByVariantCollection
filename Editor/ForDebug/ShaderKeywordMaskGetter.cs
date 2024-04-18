@@ -9,6 +9,23 @@ namespace UTJ
 {
     public class ShaderKeywordMaskGetter
     {
+        public struct PassInfo : IComparer<PassInfo>
+        {
+            public int subShaderIndex;
+            public int passIndex;
+
+            public int Compare(PassInfo x, PassInfo y)
+            {
+                int val = x.subShaderIndex.CompareTo(y.subShaderIndex);
+                if(val != 0) { return val; }
+                return x.passIndex.CompareTo(y.passIndex);
+            }
+
+            public override string ToString()
+            {
+                return subShaderIndex.ToString() + "-" + passIndex.ToString();
+            }
+        }
 
         private const int FLAG_VERTEX = 0x01;
         private const int FLAG_FRAGMENT = 0x02;
@@ -21,14 +38,33 @@ namespace UTJ
         private Dictionary<string, int> keywordFlags;
         private List<string> keywords;
 
+        private HashSet<PassInfo> passInfos;
+
         public ShaderKeywordMaskGetter(Shader sh)
         {
             this.shader = sh;
             ConstructFlag();
 
             // Debug 
-            DebugKeywords();
+            //DebugKeywords();
         }
+        public List<string> allKeywords
+        {
+            get
+            {
+                return keywords;
+            }
+        }
+
+        public List<PassInfo> GetAllPasses()
+        {
+            var list = new List<PassInfo>();
+            foreach(PassInfo passId in passInfos){
+                list.Add(passId);
+            }
+            return list;
+        }
+
 
         private void ConstructFlag()
         {
@@ -47,6 +83,7 @@ namespace UTJ
             {
                 return;
             }
+            this.passInfos = new HashSet<PassInfo>();
             this.keywordFlags = new Dictionary<string, int>();
             int arraySize = subShadersProp.arraySize;
             for (int i = 0; i < arraySize; ++i)
@@ -102,6 +139,7 @@ namespace UTJ
             {
                 return;
             }
+
             int arraySize = masksProp.arraySize;
             for (int i = 0; i < arraySize; ++i)
             {
@@ -180,5 +218,6 @@ namespace UTJ
         }
 
         #endregion GET_FLAGS
+
     }
 }

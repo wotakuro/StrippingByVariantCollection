@@ -31,8 +31,16 @@ Strict Variant Strippingが有効になっていないと、こちらの機能�
 ### Script Execute Order
 本アセットのIPreprocessShadersのorder(実行順) を指定します。
 
+### IgnoreStageOnlyKeyword
+Vertexシェーダー実行時に、Verexシェーダーでしか使わないキーワードを一致する時に無視します。
+これによって、Variant数が増える事はありますが、余計なStripを阻止することが出来ます。
+
 ### [Debug] List IPreprocessShaders
 IPreprocessShadersを実装した全てのクラスを表示します。
+
+### [Debug]List ShaderKeywords
+![alt text](Documentation~/ShaderKeywordDebug.png)
+Shaderのキーワードが、どのStageで有効になっているかデバッグするための機能です。
 
 ### Exclude Stripping Rule
 ここで指定されたShaderVariantCollectionアセットは対象外となり、無視します。

@@ -20,6 +20,7 @@ namespace UTJ.ShaderVariantStripping
         private Toggle logToggle;
         private Toggle strictModeToggle;
         private Toggle disableUnityStrip;
+        private Toggle ignoreStageOnlyKeyword;
         private IntegerField orderIntField;
 
         private Button executeOrderMinBtn;
@@ -30,6 +31,7 @@ namespace UTJ.ShaderVariantStripping
         private Button addExcludeBtn;
         private ListView excludeVariantListView;
         private Button debugListViewBtn;
+        private Button debugShaderKeywordBtn;
 
         private List<ShaderVariantCollection> collections;
 
@@ -45,6 +47,7 @@ namespace UTJ.ShaderVariantStripping
             logToggle = this.rootVisualElement.Q<Toggle>("LogEnable");
             strictModeToggle = this.rootVisualElement.Q<Toggle>("StrictVariantStripping");
             disableUnityStrip = this.rootVisualElement.Q<Toggle>("DisableUnityStrip");
+            ignoreStageOnlyKeyword = this.rootVisualElement.Q<Toggle>("IgnoreStgeOnlyKeyword");
 
             orderIntField = this.rootVisualElement.Q<IntegerField>("ExecuteOrder");
             executeOrderMinBtn = this.rootVisualElement.Q<Button>("ExecOrderMinBtn");
@@ -56,22 +59,26 @@ namespace UTJ.ShaderVariantStripping
             excludeVariantListView = this.rootVisualElement.Q<ListView>("ExcludeList");
 
             debugListViewBtn = this.rootVisualElement.Q<Button>("DebugListProcessorBtn");
+            debugShaderKeywordBtn = this.rootVisualElement.Q<Button>("DebugShaderKeywords");
 
 
             enableToggle.SetValueWithoutNotify(StripShaderConfig.IsEnable);
             logToggle.SetValueWithoutNotify(StripShaderConfig.IsLogEnable);
             strictModeToggle.SetValueWithoutNotify(StripShaderConfig.StrictVariantStripping);
             disableUnityStrip.SetValueWithoutNotify(StripShaderConfig.DisableUnityStrip);
+            ignoreStageOnlyKeyword.SetValueWithoutNotify(StripShaderConfig.IgnoreStageOnlyKeyword);
             orderIntField.SetValueWithoutNotify(StripShaderConfig.Order);
 
             enableToggle.RegisterValueChangedCallback(OnChangeEnabbleToggle);
             logToggle.RegisterValueChangedCallback(OnChangeLogEnabbleToggle);
             strictModeToggle.RegisterValueChangedCallback(OnChangeStrictModeToggle);
             disableUnityStrip.RegisterValueChangedCallback(OnChangeDisableUnityStripToggle);
+            ignoreStageOnlyKeyword.RegisterValueChangedCallback(OnChangeIgnoreStageOnlyKeywordToggle);
 
             resetTimestampBtn.clicked += OnClickResetTimestamp;
 
             debugListViewBtn.clicked += OnClickDebugListViewBtn;
+            debugShaderKeywordBtn.clicked += OnClickShaderKeywordDebugBtn;
 
             orderIntField.RegisterCallback<FocusOutEvent>(OnLostFocusIntField);
             executeOrderMinBtn.clicked += OnClickMinButton;
@@ -106,10 +113,17 @@ namespace UTJ.ShaderVariantStripping
             StripShaderConfig.DisableUnityStrip = val.newValue;
         }
 
+        private void OnChangeIgnoreStageOnlyKeywordToggle(ChangeEvent<bool> val)
+        {
+            StripShaderConfig.IgnoreStageOnlyKeyword = val.newValue;
+        }
+        
+
         private void SetUIActiveAtEnabled(bool enabled)
         {
             strictModeToggle.SetEnabled(enabled);
             disableUnityStrip.SetEnabled(enabled);
+            ignoreStageOnlyKeyword.SetEnabled(enabled);
             orderIntField.SetEnabled(enabled);
 
             orderIntField.SetEnabled(enabled);
@@ -220,6 +234,12 @@ namespace UTJ.ShaderVariantStripping
         {
             ListShaderPreProcessClasses.ShowDebugWindow();
         }
+
+        private void OnClickShaderKeywordDebugBtn()
+        {
+            ShaderKeywordDebugWindow.CreateWindow<ShaderKeywordDebugWindow>();
+        }
+
 
         void OnDisable()
         {

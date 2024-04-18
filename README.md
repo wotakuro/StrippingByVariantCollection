@@ -32,8 +32,16 @@ If Strict Variant Stripping is not enabled, you cannot use this feature.
 ### Script Execute Order
 Setting the order of "IPreprocessShaders" in this asset.
 
+### IgnoreStageOnlyKeyword
+During Vertex shader execution, ignore keywords that are only used in the Verex shader when matching.
+This may increase the number of Variants, but it prevents extra Strip.
+
 ### [Debug] List IPreprocessShaders
 List the all classes that implments IPreprocessShaders.
+
+### [Debug]List ShaderKeywords
+![alt text](Documentation~/ShaderKeywordDebug.png)
+You can debug which Shader keywords are enabled at which Stage.
 
 ### Exclude Stripping Rule
 The ShaderVariantCollection asset specified here will be ignored.

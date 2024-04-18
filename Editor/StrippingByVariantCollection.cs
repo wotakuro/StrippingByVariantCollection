@@ -17,7 +17,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-///#define DEBUG_LOG_STRIPPING_VARIANT
+///#define DEBUG_STRIPPING_VARIANT
 
 using System.Collections.Generic;
 using UnityEngine;
@@ -281,7 +281,8 @@ namespace UTJ.ShaderVariantStripping
         }
 
         private bool IsExist(HashSet<ShaderVariantsInfo> variantsHashSet,
-            Shader shader, ShaderSnippetData snippet, ShaderCompilerData data)
+            Shader shader, ShaderSnippetData snippet, ShaderCompilerData data,
+             ShaderKeywordMaskGetterPerSnippet maskGetter)
         {
             var keywords = data.shaderKeywordSet.GetShaderKeywords();
             var compiledKeyword = Convert(shader, keywords);
@@ -299,8 +300,39 @@ namespace UTJ.ShaderVariantStripping
                 return false;
             }
             bool flag = (variantsHashSet.Contains(targetInfo));
+            if (!flag && StripShaderConfig.IgnoreStageOnlyKeyword )
+            {
+                bool isRemoved = RemoveStageOnlyKeyword(compiledKeyword,maskGetter);
+                if(isRemoved)
+                {
+                    // only program keyword only
+                    if (compiledKeyword.Count == 0)
+                    {
+                        return true;
+                    }
+
+                    var excludePgonlyKeywordTarget = new ShaderVariantsInfo(shader, snippet.passType, compiledKeyword.ToArray());
+                    flag |= flag = (variantsHashSet.Contains(targetInfo));
+                }
+            }
 
             return flag;
+        }
+
+        private bool RemoveStageOnlyKeyword(List<string> compiledKeyword, ShaderKeywordMaskGetterPerSnippet maskGetter)
+        {
+            List<int> removeIndex = new List<int>();
+            int count = compiledKeyword.Count;
+            for (int i=0;i<count;++i)
+            {
+                var keyword = compiledKeyword[i];
+                if (maskGetter.IsThisProgramTypeOnlyKeyword(keyword))
+                {
+                    removeIndex.Add(i);
+                }
+            }
+
+            return (removeIndex.Count > 0);
         }
 
         private List<string> Convert(Shader shader, ShaderKeyword[] keywords)
@@ -308,16 +340,23 @@ namespace UTJ.ShaderVariantStripping
             List<string> converted = new List<string>(keywords.Length);
             for (int i = 0; i < keywords.Length; ++i)
             {
+
 #if UNITY_2022_2_OR_NEWER
-                if (!string.IsNullOrEmpty( keywords[i].name) )
+                string keywordName = keywords[i].name;
+#else
+                string keywordName = ShaderKeyword.GetKeywordName(shader, keywords[i]);
+#endif
+
+#if UNITY_2022_2_OR_NEWER
+                    if (!string.IsNullOrEmpty(keywordName) )
                 {
-                    converted.Add( keywords[i].name);
+                    converted.Add(keywordName);
                 }
 #else
-                if (!string.IsNullOrEmpty( ShaderKeyword.GetKeywordName(shader, keywords[i]) ) &&
+                if (!string.IsNullOrEmpty( keywordName ) &&
                     ShaderKeyword.GetKeywordType(shader,keywords[i]) != ShaderKeywordType.BuiltinDefault)
                 {
-                    converted.Add(ShaderKeyword.GetKeywordName(shader, keywords[i]));
+                    converted.Add(keywordName);
                 }
 #endif
             }
@@ -347,7 +386,7 @@ namespace UTJ.ShaderVariantStripping
             return copyData;
         }
 
-#if DEBUG_LOG_STRIPPING_VARIANT
+#if DEBUG_STRIPPING_VARIANT
         void LogShaderVariantsInfo(string header,Shader shader,ShaderSnippetData data, HashSet<ShaderVariantsInfo> variants)
         {
             StringBuilder stringBuilder = new StringBuilder(1024);
@@ -392,7 +431,10 @@ namespace UTJ.ShaderVariantStripping
             int startVariants = shaderCompilerData.Count;
 
             ShaderKeywordMaskGetterPerSnippet maskGetter = new ShaderKeywordMaskGetterPerSnippet(shader, snippet);
-
+            if (StripShaderConfig.IgnoreStageOnlyKeyword)
+            {
+                maskGetter.ConstructOnlyKeyword();
+            }
 
             this.includeVariantsBuffer.Length = 0;
             this.excludeVariantsBuffer.Length = 0;
@@ -418,11 +460,11 @@ namespace UTJ.ShaderVariantStripping
             HashSet<ShaderVariantsInfo> variantsHashSet = null;
             if (shaderVariants.TryGetValue(shader, out variantsHashSet))
             {
-#if DEBUG_LOG_STRIPPING_VARIANT
+#if DEBUG_STRIPPING_VARIANT
                 LogShaderVariantsInfo("Before", shader, snippet, variantsHashSet);
 #endif
                 variantsHashSet = CreateCurrentStageVariantsInfo(variantsHashSet, maskGetter);
-#if DEBUG_LOG_STRIPPING_VARIANT
+#if DEBUG_STRIPPING_VARIANT
                 LogShaderVariantsInfo("After", shader, snippet, variantsHashSet);
 #endif
             }
@@ -433,7 +475,7 @@ namespace UTJ.ShaderVariantStripping
             this.compileResultBuffer.Clear();
             for (int i = 0; i < shaderCompilerData.Count; ++i)
             {
-                bool isExistsVariant = IsExist(variantsHashSet, shader, snippet, shaderCompilerData[i]);
+                bool isExistsVariant = IsExist(variantsHashSet, shader, snippet, shaderCompilerData[i],maskGetter);
 
                 if (StripShaderConfig.IsLogEnable)
                 {

@@ -28,6 +28,10 @@ namespace UTJ
         private Shader shader;
         private ShaderSnippetData snippetData;
 
+
+        private HashSet<string> pgTypeOnlyKeyword;
+        private bool isExecuteConstructOnlyKeyword = false;
+
         public ShaderKeywordMaskGetterPerSnippet(Shader sh, ShaderSnippetData snippet)
         {
             this.shader = sh;
@@ -35,8 +39,100 @@ namespace UTJ
             int typeIndex = GetTypeIndex(snippet.shaderType);
             int subShaderIndex = (int)snippet.pass.SubshaderIndex;
             int passIndex = (int)snippet.pass.PassIndex;
-            ConstructFlag(subShaderIndex, passIndex, ShaderTypeTable[typeIndex]);
+            ConstructValidKeywords(subShaderIndex, passIndex, ShaderTypeTable[typeIndex]);
         }
+
+        #region SEARCH_OTHER_PROGRAM_TYPE
+
+        public void ConstructOnlyKeyword()
+        {
+            var serializeObject = new SerializedObject(shader);
+
+            this.isExecuteConstructOnlyKeyword = true;
+            int subShaderIndex = (int)this.snippetData.pass.SubshaderIndex;
+            int passIndex = (int)snippetData.pass.PassIndex;
+            int typeIndex = GetTypeIndex(snippetData.shaderType);
+            // sub shaders
+            var subShadersProp = serializeObject.FindProperty("m_ParsedForm.m_SubShaders");
+            if (subShadersProp == null || !subShadersProp.isArray)
+            {
+                return;
+            }
+            int subShadersSize = subShadersProp.arraySize;
+            if (subShaderIndex < 0 || subShaderIndex >= subShadersSize)
+            {
+                return;
+            }
+            var subShaderProp = subShadersProp.GetArrayElementAtIndex(subShaderIndex);
+            // pass
+            var passesProp = subShaderProp.FindPropertyRelative("m_Passes");
+            if (passesProp == null || !passesProp.isArray)
+            {
+                return;
+            }
+            int passesSize = passesProp.arraySize;
+            if (passIndex < 0 || passIndex >= passesSize)
+            {
+                return;
+            }
+            var currentPassProp = passesProp.GetArrayElementAtIndex(passIndex);
+            var onlyKeywordIndex = ConstructPassKeywordStateMask(currentPassProp, ShaderTypeTable[typeIndex]);
+            for (int i = 0; i < ShaderTypeTable.Length; i++)
+            {
+                if (i != typeIndex)
+                {
+                    RemovePassKeywordStateMaskIfExist(currentPassProp, ShaderTypeTable[i], onlyKeywordIndex);
+                }
+            }
+            this.pgTypeOnlyKeyword = new HashSet<string>();
+            foreach(var index in onlyKeywordIndex)
+            {
+
+                pgTypeOnlyKeyword.Add(this.keywords[index]);
+            }
+        }
+
+        private HashSet<int> ConstructPassKeywordStateMask(SerializedProperty passProp, string typeStr)
+        {
+            HashSet<int> passKeywordStateMask = null;
+            var stageProp = passProp.FindPropertyRelative(typeStr);
+            if (stageProp == null) { return null; }
+            var masksProp = stageProp.FindPropertyRelative("m_SerializedKeywordStateMask");
+            if (masksProp == null || !masksProp.isArray)
+            {
+                return null;
+            }
+
+            int arraySize = masksProp.arraySize;
+            passKeywordStateMask = new HashSet<int>();
+            for (int i = 0; i < arraySize; ++i)
+            {
+                int index = masksProp.GetArrayElementAtIndex(i).intValue;
+                passKeywordStateMask.Add(index);
+            }
+            return passKeywordStateMask;
+        }
+        private void RemovePassKeywordStateMaskIfExist(SerializedProperty passProp, string typeStr, HashSet<int> passKeywordStateMask)
+        {
+            if(passKeywordStateMask == null) { return; }
+            var stageProp = passProp.FindPropertyRelative(typeStr);
+            if (stageProp == null) { return; }
+            var masksProp = stageProp.FindPropertyRelative("m_SerializedKeywordStateMask");
+            if (masksProp == null || !masksProp.isArray)
+            {
+                return;
+            }
+
+            int arraySize = masksProp.arraySize;
+            for (int i = 0; i < arraySize; ++i)
+            {
+                int index = masksProp.GetArrayElementAtIndex(i).intValue;
+                passKeywordStateMask.Remove(index);
+            }
+        }
+        #endregion SEARCH_OTHER_PROGRAM_TYPE
+
+
         public bool HasCutoffKeywords()
         {
             if(validKeywords == null)
@@ -68,7 +164,12 @@ namespace UTJ
             foreach ( var keyword in this.keywords)
             {
                 bool validFlag = this.ValidKeyword(keyword);
-                stringBuilder.Append("  ").Append(keyword).Append(":").Append(validFlag).Append("\n");
+                stringBuilder.Append("  ").Append(keyword).Append(":").Append(validFlag);
+                if (this.isExecuteConstructOnlyKeyword)
+                {
+                    stringBuilder.Append("  OnlyThisProgramType:").Append(this.IsThisProgramTypeOnlyKeyword(keyword) );
+                }
+                stringBuilder.Append("\n");
             }
             return stringBuilder.ToString();
         }
@@ -81,6 +182,15 @@ namespace UTJ
             }
             return validKeywords.Contains(keyword);
         }
+        public bool IsThisProgramTypeOnlyKeyword(string keyword)
+        {
+            if (this.pgTypeOnlyKeyword == null)
+            {
+                return true;
+            }
+            return pgTypeOnlyKeyword.Contains(keyword);
+        }
+
         public string []ConvertValidOnlyKeywords(string[] keywords)
         {
             if(keywords == null) { return null; }
@@ -128,7 +238,7 @@ namespace UTJ
             }
             return -1;
         }
-        private void ConstructFlag(int subShaderIndex,int passIndex,string typeStr)
+        private void ConstructValidKeywords(int subShaderIndex,int passIndex,string typeStr)
         {
             var serializeObject = new SerializedObject(shader);
             // get keyword list
@@ -150,10 +260,10 @@ namespace UTJ
             {
                 return;
             }
-            ExecuteSubShader(subShadersProp.GetArrayElementAtIndex(subShaderIndex), passIndex,typeStr);            
+            CreateValidKeywordInSubShader(subShadersProp.GetArrayElementAtIndex(subShaderIndex), passIndex,typeStr);            
         }
 
-        private void ExecuteSubShader(SerializedProperty subShaderProp, int passIndex, string typeStr)
+        private void CreateValidKeywordInSubShader(SerializedProperty subShaderProp, int passIndex, string typeStr)
         {
             var passesProp = subShaderProp.FindPropertyRelative("m_Passes");
             if (passesProp == null || !passesProp.isArray)
@@ -166,11 +276,11 @@ namespace UTJ
                 return;
             }
             var currentPassProp = passesProp.GetArrayElementAtIndex(passIndex);
-            ExecutePass(currentPassProp, typeStr);
+            CreateValidKeywordInPass(currentPassProp, typeStr);
 
         }
 
-        private void ExecutePass(SerializedProperty passProp, string typeStr)
+        private void CreateValidKeywordInPass(SerializedProperty passProp, string typeStr)
         {
             var stageProp = passProp.FindPropertyRelative(typeStr);
             if (stageProp == null) { return; }

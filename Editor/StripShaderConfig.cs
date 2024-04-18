@@ -19,6 +19,7 @@ namespace UTJ.ShaderVariantStripping
             public bool disableUnityStrip;
             public int order;
             public List<string> excludeVariantCollection;
+            public bool ignoreStageOnlyKeyword;
         }
 
         private static ConfigData currentConfig;
@@ -46,6 +47,18 @@ namespace UTJ.ShaderVariantStripping
                 SaveConfigData();
             }
         }
+
+
+        public static bool IgnoreStageOnlyKeyword
+        {
+            get { return currentConfig.ignoreStageOnlyKeyword; }
+            set
+            {
+                currentConfig.ignoreStageOnlyKeyword = value;
+                SaveConfigData();
+            }
+        }
+
 
         public static bool StrictVariantStripping
         {
