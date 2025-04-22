@@ -807,14 +807,9 @@ namespace UTJ.ShaderVariantStripping
             }
             this.includeVariantsBuffer.Append("\n==================\n");
 
-            string shaderName = shader.name.Replace("/", "_");
-            string name = shaderName + "_" + snippet.shaderType.ToString() + "_" + snippet.passName + "_" + snippet.passType;
-            string includeDir = LogDirectory + "/" + dateTimeStr + "/Include/" + shaderName;
-            if (!System.IO.Directory.Exists(includeDir))
-            {
-                System.IO.Directory.CreateDirectory(includeDir);
-            }
-            System.IO.File.AppendAllText(System.IO.Path.Combine(includeDir, name) + ".txt", includeVariantsBuffer.ToString());
+            string filePath;
+            GetPathNames(LogDirectory + "/" + dateTimeStr + "/Include/", shader, snippet, out filePath);
+            System.IO.File.AppendAllText(filePath, includeVariantsBuffer.ToString());
         }
         private void LogNotInVariantColllection(Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> shaderCompilerData)
         {
@@ -829,16 +824,30 @@ namespace UTJ.ShaderVariantStripping
             }
             this.excludeVariantsBuffer.Append("\n==================\n");
 
-            string shaderName = shader.name.Replace("/", "_");
-            string name = shaderName + "_" + snippet.shaderType.ToString() + "_" + snippet.passName + "_" + snippet.passType;
-            string excludeDir = LogDirectory + "/" + dateTimeStr + "/Exclude/" + shaderName;
-
-            if (!System.IO.Directory.Exists(excludeDir))
-            {
-                System.IO.Directory.CreateDirectory(excludeDir);
-            }
-            System.IO.File.AppendAllText(System.IO.Path.Combine(excludeDir, name) + ".txt", excludeVariantsBuffer.ToString());
+            string filePath;
+            GetPathNames(LogDirectory + "/" + dateTimeStr + "/Exclude/", shader, snippet,out filePath);
+            System.IO.File.AppendAllText(filePath, excludeVariantsBuffer.ToString());
         }
-#endregion LOGGING
+
+        private static void GetPathNames(string dirHead, Shader shader, ShaderSnippetData snippet,out string filePath)
+        {
+            var shortShaderName = shader.name.Replace('|', '-');
+            int lastSlashIndex = shortShaderName.LastIndexOf('/');
+            if (lastSlashIndex != -1)
+            {
+                shortShaderName = shortShaderName.Substring(lastSlashIndex + 1);
+            }
+            string shaderName = shader.name.Replace('/', '_').Replace('|', '-');
+            string name = shortShaderName + "_" + snippet.shaderType.ToString() + "_" + snippet.passName + "_" + snippet.passType;
+            string dir = dirHead + shaderName;
+
+            if (!System.IO.Directory.Exists(dir))
+            {
+                System.IO.Directory.CreateDirectory(dir);
+            }
+            Debug.Log(dir + ";;" + name +":::");
+            filePath = System.IO.Path.Combine(dir, name) + ".txt";
+        }
+        #endregion LOGGING
     }
 }
