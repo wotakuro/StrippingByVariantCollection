@@ -5,6 +5,10 @@ using System.Collections.Generic;
 using UnityEditor.Callbacks;
 using UTJ.ShaderVariantStripping.CodeGen;
 
+#if UNITY_6000_0_OR_NEWER
+using UnityEngine.Experimental.Rendering;
+#endif 
+
 namespace UTJ.ShaderVariantStripping
 {
     internal class StripShaderConfig
@@ -20,6 +24,16 @@ namespace UTJ.ShaderVariantStripping
             public int order;
             public List<string> excludeVariantCollection;
             public bool ignoreStageOnlyKeyword;
+
+            // from Unity6
+            // Set the default value to False in consideration of migration.
+            public bool disableSVC; // SVC = ShaderVariantCollection;
+            public bool disableGSC;// GSC = GraphicsStateCollection
+
+            public bool matchGSCGraphicsAPI;
+            public bool matchGSCPlatform;
+            public List<string> exlucdeGSC;
+
         }
 
         private static ConfigData currentConfig;
@@ -118,6 +132,48 @@ namespace UTJ.ShaderVariantStripping
             }
         }
 
+        // from U6
+        #region UNITY_6
+        public static bool UseSVC
+        {
+            get { return !currentConfig.disableSVC; }
+            set
+            {
+                currentConfig.disableSVC = value;
+                SaveConfigData();
+            }
+        }
+        public static bool UseGSC
+        {
+            get { return !currentConfig.disableGSC; }
+            set
+            {
+                currentConfig.disableGSC = value;
+                SaveConfigData();
+            }
+        }
+        public static bool MatchGSCGraphicsAPI
+        {
+            get { return !currentConfig.matchGSCGraphicsAPI; }
+            set
+            {
+                currentConfig.matchGSCGraphicsAPI = value;
+                SaveConfigData();
+            }
+        }
+        public static bool MatchGSCPlatform
+        {
+            get { return !currentConfig.matchGSCPlatform; }
+            set
+            {
+                currentConfig.matchGSCPlatform = value;
+                SaveConfigData();
+            }
+        }
+
+        #endregion UNITY_6
+
+
         private static void ReloadCode()
         {
             var targets = RecompileAsmUtility.GetRecompileTarget(true);
@@ -186,7 +242,7 @@ namespace UTJ.ShaderVariantStripping
             File.WriteAllText(ConfigFile, str);
         }
 
-        public static List<ShaderVariantCollection> GetVariantCollectionAsset()
+        public static List<ShaderVariantCollection> GetExcludeVariantCollectionAsset()
         {
             List<ShaderVariantCollection> list = new List<ShaderVariantCollection>();
             if( currentConfig.excludeVariantCollection != null)
@@ -200,7 +256,7 @@ namespace UTJ.ShaderVariantStripping
             return list;
         }
 
-        public static void SetVariantCollection(List<ShaderVariantCollection> list)
+        public static void SetExcludeVariantCollection(List<ShaderVariantCollection> list)
         {
             List<string> paths = new List<string>();
             foreach (var collectionAsset in list)
@@ -218,6 +274,43 @@ namespace UTJ.ShaderVariantStripping
                 SaveConfigData();
             }
         }
+
+        #if UNITY_6000_0_OR_NEWER
+
+
+        public static List<GraphicsStateCollection> GetExcludeGSC()
+        {
+            var list = new List<GraphicsStateCollection>();
+            if (currentConfig.exlucdeGSC != null)
+            {
+                foreach (var collectionPath in currentConfig.exlucdeGSC)
+                {
+                    var variantCollectionAsset = AssetDatabase.LoadAssetAtPath<GraphicsStateCollection>(collectionPath);
+                    list.Add(variantCollectionAsset);
+                }
+            }
+            return list;
+        }
+
+        public static void SetExcludeGSC(List<GraphicsStateCollection> list)
+        {
+            List<string> paths = new List<string>();
+            foreach (var collectionAsset in list)
+            {
+                paths.Add(AssetDatabase.GetAssetPath(collectionAsset));
+            }
+            if (currentConfig.exlucdeGSC == null)
+            {
+                currentConfig.exlucdeGSC = new List<string>();
+            }
+
+            if (!IsSameList(paths, currentConfig.exlucdeGSC))
+            {
+                currentConfig.exlucdeGSC = paths;
+                SaveConfigData();
+            }
+        }
+        #endif
 
         private static bool IsSameList(List<string> src1, List<string> src2)
         {

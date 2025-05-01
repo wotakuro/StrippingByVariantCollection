@@ -1,0 +1,43 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
+    <ui:TabView>
+        <ui:Tab label="Common" name="Common">
+            <ui:VisualElement style="flex-grow: 1; margin-top: 10px; margin-left: 5px;">
+                <ui:Toggle label="Enable Stripping" name="Enabled" />
+                <ui:VisualElement name="LogItems" style="flex-direction: row; justify-content: space-between;">
+                    <ui:Toggle label="Log Variant" name="LogEnable" tooltip="Log files are placed under &quot;./ShaderVariants/Builds&quot;" />
+                    <ui:Button text="Reset Timestamp" display-tooltip-when-elided="true" name="ResetTimestampBtn" />
+                </ui:VisualElement>
+                <ui:Foldout text="Advanced">
+                    <ui:Toggle label="Disable Unity Stripping" name="DisableUnityStrip" tooltip="Disable the  &quot;IPreprocessShaders&quot; in the Unity or UnityEngine or UnityEditor namespace  by editing IL." />
+                    <uie:IntegerField label="Script Execute Order" value="42" name="ExecuteOrder" tooltip="The order of this IProcessShaders" />
+                    <ui:VisualElement style="flex-direction: row; margin-top: 3px;">
+                        <ui:VisualElement style="width: 130px;" />
+                        <ui:Button text="Min" display-tooltip-when-elided="true" name="ExecOrderMinBtn" style="width: 40px;" />
+                        <ui:Button text="Max" display-tooltip-when-elided="true" name="ExecOrderMaxBtn" style="width: 40px;" />
+                    </ui:VisualElement>
+                    <ui:Button text="[Debug] List IPreprocessShaders" display-tooltip-when-elided="true" name="DebugListProcessorBtn" style="width: 200px;" />
+                    <ui:Button text="[Debug]List ShaderKeywords" parse-escape-sequences="true" display-tooltip-when-elided="true" name="DebugShaderKeywords" style="width: 200px;" />
+                </ui:Foldout>
+            </ui:VisualElement>
+        </ui:Tab>
+        <ui:Tab label="ShaderVariantCollection" name="ShaderVariantCollection">
+            <ui:VisualElement style="flex-grow: 1; margin-top: 10px; margin-left: 5px;">
+                <ui:Toggle label="Use ShaderVarinatCollection" name="UseSVC" />
+                <ui:Toggle label="Strict Variant Stripping" name="StrictVariantStripping" tooltip="Strict mode enabled -&gt; remove all variants if the shader is not in ShaderVariantColleciton." />
+                <ui:Toggle label="IgnoreStgeOnlyKeyword" name="IgnoreStgeOnlyKeyword" />
+                <ui:Label text="Exculude Stripping Rule" display-tooltip-when-elided="true" name="Label" style="margin-left: 10px;" />
+                <ui:ScrollView style="margin-left: 20px;">
+                    <ui:ListView focusable="true" name="ExcludeList" reorderable="true" fixed-item-height="20" />
+                    <ui:Button text="Add ShaderVariantCollection" display-tooltip-when-elided="true" name="AppendExcludeBtn" />
+                </ui:ScrollView>
+            </ui:VisualElement>
+        </ui:Tab>
+        <ui:Tab label="GraphicsStateCollection" name="GraphicsStateCollection">
+            <ui:VisualElement style="flex-grow: 1; margin-top: 10px; margin-left: 5px;">
+                <ui:Toggle label="UseGraphicsStateCollection" name="UseGSC" value="false" />
+                <ui:Toggle label="Match Graphics API Only" name="matchGSCGraphicsAPI" />
+                <ui:Toggle label="Match Target Platform Only" name="matchGSCPlatform" />
+            </ui:VisualElement>
+        </ui:Tab>
+    </ui:TabView>
+</ui:UXML>

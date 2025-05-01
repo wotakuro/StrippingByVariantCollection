@@ -1,3 +1,5 @@
+#if UNITY_6000_0_OR_NEWER
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,12 +10,12 @@ using UnityEditor.UIElements;
 namespace UTJ.ShaderVariantStripping
 {
 
-    internal class StrippingConfigWindow : EditorWindow
+    internal class StrippingConfigForUnity6Window : EditorWindow
     {
-        [MenuItem("Tools/UTJ/ShaderStrippingConfig")]
+        [MenuItem("Tools/UTJ/ShaderStrippingConfigU6")]
         public static void Create()
         {
-            EditorWindow.GetWindow<StrippingConfigWindow>();
+            EditorWindow.GetWindow<StrippingConfigForUnity6Window>();
         }
 
         private Toggle enableToggle;
@@ -39,7 +41,7 @@ namespace UTJ.ShaderVariantStripping
         void OnEnable()
         {
             this.name = "ShaderStrippingConfig";
-            var tree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/com.utj.stripvariant/Editor/UXML/ConfigUI.uxml");
+            var tree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/com.utj.stripvariant/Editor/UXML/ConfigUI_Unity6.uxml");
 
             this.rootVisualElement.Add(tree.CloneTree());
 
@@ -156,11 +158,7 @@ namespace UTJ.ShaderVariantStripping
         private void SetupExcludeRules()
         {
             this.collections = StripShaderConfig.GetExcludeVariantCollectionAsset();
-#if UNITY_2021_2_OR_NEWER
             excludeVariantListView.fixedItemHeight = 20;
-#else
-            excludeVariantListView.itemHeight = 20;
-#endif
             excludeVariantListView.reorderable = true;
 
             excludeVariantListView.makeItem = () =>
@@ -247,3 +245,5 @@ namespace UTJ.ShaderVariantStripping
         }
     }
 }
+
+#endif
