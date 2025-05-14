@@ -169,7 +169,7 @@ namespace UTJ.ShaderVariantStripping
             };
             excludeVariantListView.bindItem = (e, i) => {
                 var variantUI = (e as SVCListItem);
-                variantUI.variantCollection = collections[i];
+                variantUI.assetData = collections[i];
                 variantUI.ListIndex = i;
             };
             excludeVariantListView.itemsSource = collections;
@@ -187,7 +187,7 @@ namespace UTJ.ShaderVariantStripping
         }
         private void OnChangeExclueValue(SVCListItem variantCollectionUI)
         {
-            collections[variantCollectionUI.ListIndex] = variantCollectionUI.variantCollection;
+            collections[variantCollectionUI.ListIndex] = variantCollectionUI.assetData;
             StripShaderConfig.SetExcludeVariantCollection(this.collections);
         }
 

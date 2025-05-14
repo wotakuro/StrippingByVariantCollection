@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEngine.UIElements;
 using UnityEditor.UIElements;
+using UnityEngine.Experimental.Rendering;
 
 namespace UTJ.ShaderVariantStripping
 {
@@ -44,7 +45,8 @@ namespace UTJ.ShaderVariantStripping
         private Button debugListViewBtn;
         private Button debugShaderKeywordBtn;
 
-        private List<ShaderVariantCollection> collections;
+        private List<ShaderVariantCollection> svcAssets;
+        private List<GraphicsStateCollection> gscAssets;
 
         // Start is called before the first frame update
         void OnEnable()
@@ -120,11 +122,13 @@ namespace UTJ.ShaderVariantStripping
             this.executeOrderMinBtn.clicked += OnClickMinButton;
             this.executeOrderMaxBtn.clicked += OnClickMaxButton;
             this.addExcludeSVCBtn.clicked += OnClickAddExcludeSVC;
+            this.addExcludeGSCBtn.clicked += OnClickAddExcludeGSC;
 
             SetUIActiveAtEnabled(enableToggle.value);
             SetUIActiveAtStrictMode(strictModeToggle.value);
 
             SetupExcludeSVCRules();
+            this.SetupExcludeGSCRules();
             StripProcessShaders.ResetData();
         }
 
@@ -206,55 +210,105 @@ namespace UTJ.ShaderVariantStripping
             this.orderIntField.SetValueWithoutNotify(int.MaxValue);
         }
 
+        #region SVC Rules
+
         private void SetupExcludeSVCRules()
         {
-            this.collections = StripShaderConfig.GetExcludeVariantCollectionAsset();
+            this.svcAssets = StripShaderConfig.GetExcludeVariantCollectionAsset();
             excludeSVCListView.fixedItemHeight = 20;
             excludeSVCListView.reorderable = true;
 
             excludeSVCListView.makeItem = () =>
             {
-                return new SVCListItem(OnChangeSVCExclueValue, OnRemoveExcludeSVC);
+                return new SVCListItem(this.OnChangeSVCExclueValue, this.OnRemoveExcludeSVC);
             };
             excludeSVCListView.bindItem = (e, i) => {
                 var variantUI = (e as SVCListItem);
-                variantUI.variantCollection = collections[i];
+                variantUI.assetData = this.svcAssets[i];
                 variantUI.ListIndex = i;
             };
-            excludeSVCListView.itemsSource = collections;
+            excludeSVCListView.itemsSource = svcAssets;
 
-            RefleshExcludeUI(this.excludeSVCListView);
+            RefleshExcludeUI(this.excludeSVCListView, svcAssets.Count);
         }
 
         private void OnClickAddExcludeSVC()
         {
-            collections.Add(null); 
-            RefleshExcludeUI(this.excludeSVCListView);
+            svcAssets.Add(null); 
+            RefleshExcludeUI(this.excludeSVCListView, svcAssets.Count);
 
         }
         private void OnChangeSVCExclueValue(SVCListItem variantCollectionUI)
         {
-            collections[variantCollectionUI.ListIndex] = variantCollectionUI.variantCollection;
-            StripShaderConfig.SetExcludeVariantCollection(this.collections);
+            svcAssets[variantCollectionUI.ListIndex] = variantCollectionUI.assetData;
+            StripShaderConfig.SetExcludeVariantCollection(this.svcAssets);
         }
 
         private void OnRemoveExcludeSVC(SVCListItem variantCollectionUI)
         {
-            collections.RemoveAt(variantCollectionUI.ListIndex);
-            RefleshExcludeUI(this.excludeSVCListView);
-            StripShaderConfig.SetExcludeVariantCollection(this.collections);
+            svcAssets.RemoveAt(variantCollectionUI.ListIndex);
+            RefleshExcludeUI(this.excludeSVCListView, svcAssets.Count);
+            StripShaderConfig.SetExcludeVariantCollection(this.svcAssets);
         }
 
-        private void RefleshExcludeUI(ListView listView)
+
+        #endregion SVC Rules
+
+
+
+        #region GSC Rules
+        // from U6
+        private void SetupExcludeGSCRules()
+        {
+            this.gscAssets = StripShaderConfig.GetExcludeGSC();
+            excludeGSCListView.fixedItemHeight = 20;
+            excludeGSCListView.reorderable = true;
+
+            excludeGSCListView.makeItem = () =>
+            {
+                return new GSCListItem(OnChangeGSCExclueValue, OnRemoveExcludeGSC);
+            };
+            excludeGSCListView.bindItem = (e, i) => {
+                var variantUI = (e as GSCListItem);
+                variantUI.assetData = gscAssets[i];
+                variantUI.ListIndex = i;
+            };
+            excludeGSCListView.itemsSource = gscAssets;
+
+            RefleshExcludeUI(this.excludeGSCListView, gscAssets.Count);
+        }
+
+        private void OnClickAddExcludeGSC()
+        {
+            gscAssets.Add(null);
+            RefleshExcludeUI(this.excludeGSCListView, gscAssets.Count);
+
+        }
+        private void OnChangeGSCExclueValue(GSCListItem variantCollectionUI)
+        {
+            gscAssets[variantCollectionUI.ListIndex] = variantCollectionUI.assetData;
+            StripShaderConfig.SetExcludeGSC(this.gscAssets);
+        }
+
+        private void OnRemoveExcludeGSC(GSCListItem variantCollectionUI)
+        {
+            gscAssets.RemoveAt(variantCollectionUI.ListIndex);
+            RefleshExcludeUI(this.excludeGSCListView, gscAssets.Count);
+            StripShaderConfig.SetExcludeGSC(this.gscAssets);
+        }
+
+        #endregion GSC Rules
+
+        private void RefleshExcludeUI(ListView listView,int count)
         {
             listView.Rebuild();
-            if (collections.Count == 0)
+            if (count== 0)
             {
                 listView.style.height = listView.fixedItemHeight;
             }
             else
             {
-                listView.style.height = listView.fixedItemHeight * collections.Count;
+                listView.style.height = listView.fixedItemHeight * count;
             }
         }
 
@@ -277,7 +331,7 @@ namespace UTJ.ShaderVariantStripping
 
         void OnDisable()
         {
-            StripShaderConfig.SetExcludeVariantCollection(this.collections);
+            StripShaderConfig.SetExcludeVariantCollection(this.svcAssets);
         }
     }
 }

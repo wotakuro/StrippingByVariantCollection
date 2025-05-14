@@ -15,11 +15,11 @@ namespace UTJ.ShaderVariantStripping
         private Action<T1> onRemoveData;
         private Action<T1> onChangeData;
 
-        public ShaderVariantCollection variantCollection
+        public T2 assetData
         {
             get
             {
-                return objField.value as ShaderVariantCollection;
+                return objField.value as T2;
             }
             set
             {
