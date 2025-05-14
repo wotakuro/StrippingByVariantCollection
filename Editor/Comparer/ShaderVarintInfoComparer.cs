@@ -1,7 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.Rendering;
-using static UTJ.ShaderVariantStripping.StrippingByVariantCollection;
+//using static UTJ.ShaderVariantStripping.StrippingByVariantCollection;
+using static UTJ.ShaderVariantStripping.ProjectSVCData;
 
 namespace UTJ.ShaderVariantStripping
 {

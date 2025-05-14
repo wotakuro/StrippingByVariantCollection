@@ -37,6 +37,11 @@
                 <ui:Toggle label="UseGraphicsStateCollection" name="UseGSC" value="false" />
                 <ui:Toggle label="Match Graphics API Only" name="matchGSCGraphicsAPI" />
                 <ui:Toggle label="Match Target Platform Only" name="matchGSCPlatform" />
+                <ui:Label text="Exculude Stripping Rule" display-tooltip-when-elided="true" name="Label" style="margin-left: 10px;" />
+                <ui:ScrollView style="margin-left: 20px;">
+                    <ui:ListView focusable="true" name="ExcludeGSCList" reorderable="true" fixed-item-height="20" />
+                    <ui:Button text="Add GraphicsStateCollection" display-tooltip-when-elided="true" name="AppendExcludeGSCBtn" />
+                </ui:ScrollView>
             </ui:VisualElement>
         </ui:Tab>
     </ui:TabView>

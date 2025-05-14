@@ -6,7 +6,7 @@ using UnityEditor.Rendering;
 using UnityEditor.Build;
 using UnityEngine.Rendering;
 using System.Text;
-using static UTJ.ShaderVariantStripping.StrippingByVariantCollection;
+using static UTJ.ShaderVariantStripping.ProjectSVCData;
 
 namespace UTJ.ShaderVariantStripping
 {

@@ -25,13 +25,22 @@ namespace UTJ.ShaderVariantStripping
         private Toggle ignoreStageOnlyKeyword;
         private IntegerField orderIntField;
 
+        // from U6
+        private Toggle useShaderVariantCollection;
+        private Toggle useGraphicsStateCollection;
+        private Toggle GSCmatchGraphicsAPIOnly;
+        private Toggle GSCmatchTargetPlatformOnly;
+        private Button addExcludeGSCBtn;
+        private ListView excludeGSCListView;
+
+
         private Button executeOrderMinBtn;
         private Button executeOrderMaxBtn;
 
         private Button resetTimestampBtn;
 
-        private Button addExcludeBtn;
-        private ListView excludeVariantListView;
+        private Button addExcludeSVCBtn;
+        private ListView excludeSVCListView;
         private Button debugListViewBtn;
         private Button debugShaderKeywordBtn;
 
@@ -45,53 +54,78 @@ namespace UTJ.ShaderVariantStripping
 
             this.rootVisualElement.Add(tree.CloneTree());
 
-            enableToggle = this.rootVisualElement.Q<Toggle>("Enabled");
-            logToggle = this.rootVisualElement.Q<Toggle>("LogEnable");
-            strictModeToggle = this.rootVisualElement.Q<Toggle>("StrictVariantStripping");
-            disableUnityStrip = this.rootVisualElement.Q<Toggle>("DisableUnityStrip");
-            ignoreStageOnlyKeyword = this.rootVisualElement.Q<Toggle>("IgnoreStgeOnlyKeyword");
+            this.enableToggle = this.rootVisualElement.Q<Toggle>("Enabled");
+            this.logToggle = this.rootVisualElement.Q<Toggle>("LogEnable");
+            this.strictModeToggle = this.rootVisualElement.Q<Toggle>("StrictVariantStripping");
+            this.disableUnityStrip = this.rootVisualElement.Q<Toggle>("DisableUnityStrip");
+            this.ignoreStageOnlyKeyword = this.rootVisualElement.Q<Toggle>("IgnoreStgeOnlyKeyword");
 
-            orderIntField = this.rootVisualElement.Q<IntegerField>("ExecuteOrder");
-            executeOrderMinBtn = this.rootVisualElement.Q<Button>("ExecOrderMinBtn");
-            executeOrderMaxBtn = this.rootVisualElement.Q<Button>("ExecOrderMaxBtn");
+            this.orderIntField = this.rootVisualElement.Q<IntegerField>("ExecuteOrder");
+            this.executeOrderMinBtn = this.rootVisualElement.Q<Button>("ExecOrderMinBtn");
+            this.executeOrderMaxBtn = this.rootVisualElement.Q<Button>("ExecOrderMaxBtn");
 
-            resetTimestampBtn = this.rootVisualElement.Q<Button>("ResetTimestampBtn");
+            this.resetTimestampBtn = this.rootVisualElement.Q<Button>("ResetTimestampBtn");
 
-            addExcludeBtn = this.rootVisualElement.Q<Button>("AppendExcludeBtn");
-            excludeVariantListView = this.rootVisualElement.Q<ListView>("ExcludeList");
+            this.addExcludeSVCBtn = this.rootVisualElement.Q<Button>("AppendExcludeBtn");
+            this.excludeSVCListView = this.rootVisualElement.Q<ListView>("ExcludeList");
 
-            debugListViewBtn = this.rootVisualElement.Q<Button>("DebugListProcessorBtn");
-            debugShaderKeywordBtn = this.rootVisualElement.Q<Button>("DebugShaderKeywords");
+            this.debugListViewBtn = this.rootVisualElement.Q<Button>("DebugListProcessorBtn");
+            this.debugShaderKeywordBtn = this.rootVisualElement.Q<Button>("DebugShaderKeywords");
+
+            // From U6
+            this.useShaderVariantCollection = this.rootVisualElement.Q<Toggle>("UseSVC");
+            this.useGraphicsStateCollection = this.rootVisualElement.Q<Toggle>("UseGSC");
+            this.GSCmatchGraphicsAPIOnly = this.rootVisualElement.Q<Toggle>("matchGSCGraphicsAPI");        
+            this.GSCmatchTargetPlatformOnly = this.rootVisualElement.Q<Toggle>("matchGSCPlatform");
+
+            this.addExcludeGSCBtn = this.rootVisualElement.Q<Button>("AppendExcludeGSCBtn");
+            this.excludeGSCListView = this.rootVisualElement.Q<ListView>("ExcludeGSCList");
 
 
-            enableToggle.SetValueWithoutNotify(StripShaderConfig.IsEnable);
-            logToggle.SetValueWithoutNotify(StripShaderConfig.IsLogEnable);
-            strictModeToggle.SetValueWithoutNotify(StripShaderConfig.StrictVariantStripping);
-            disableUnityStrip.SetValueWithoutNotify(StripShaderConfig.DisableUnityStrip);
-            ignoreStageOnlyKeyword.SetValueWithoutNotify(StripShaderConfig.IgnoreStageOnlyKeyword);
-            orderIntField.SetValueWithoutNotify(StripShaderConfig.Order);
+            this.enableToggle.SetValueWithoutNotify(StripShaderConfig.IsEnable);
+            this.logToggle.SetValueWithoutNotify(StripShaderConfig.IsLogEnable);
+            this.strictModeToggle.SetValueWithoutNotify(StripShaderConfig.StrictVariantStripping);
+            this.disableUnityStrip.SetValueWithoutNotify(StripShaderConfig.DisableUnityStrip);
+            this.ignoreStageOnlyKeyword.SetValueWithoutNotify(StripShaderConfig.IgnoreStageOnlyKeyword);
+            this.orderIntField.SetValueWithoutNotify(StripShaderConfig.Order);
+            //from U6
+            this.useShaderVariantCollection.SetValueWithoutNotify(StripShaderConfig.UseSVC);
+            this.useGraphicsStateCollection.SetValueWithoutNotify(StripShaderConfig.UseGSC);
+            this.GSCmatchGraphicsAPIOnly.SetValueWithoutNotify(StripShaderConfig.MatchGSCGraphicsAPI);
+            this.GSCmatchTargetPlatformOnly.SetValueWithoutNotify(StripShaderConfig.MatchGSCPlatform);
 
-            enableToggle.RegisterValueChangedCallback(OnChangeEnabbleToggle);
-            logToggle.RegisterValueChangedCallback(OnChangeLogEnabbleToggle);
-            strictModeToggle.RegisterValueChangedCallback(OnChangeStrictModeToggle);
-            disableUnityStrip.RegisterValueChangedCallback(OnChangeDisableUnityStripToggle);
-            ignoreStageOnlyKeyword.RegisterValueChangedCallback(OnChangeIgnoreStageOnlyKeywordToggle);
 
-            resetTimestampBtn.clicked += OnClickResetTimestamp;
 
-            debugListViewBtn.clicked += OnClickDebugListViewBtn;
-            debugShaderKeywordBtn.clicked += OnClickShaderKeywordDebugBtn;
+            this.enableToggle.RegisterValueChangedCallback(OnChangeEnabbleToggle);
+            this.logToggle.RegisterValueChangedCallback(OnChangeLogEnabbleToggle);
+            this.strictModeToggle.RegisterValueChangedCallback(OnChangeStrictModeToggle);
+            this.disableUnityStrip.RegisterValueChangedCallback(OnChangeDisableUnityStripToggle);
+            this.ignoreStageOnlyKeyword.RegisterValueChangedCallback(OnChangeIgnoreStageOnlyKeywordToggle);
 
-            orderIntField.RegisterCallback<FocusOutEvent>(OnLostFocusIntField);
-            executeOrderMinBtn.clicked += OnClickMinButton;
-            executeOrderMaxBtn.clicked += OnClickMaxButton;
-            addExcludeBtn.clicked += OnClickAddExclude;
+
+            //from U6
+            this.useShaderVariantCollection.RegisterValueChangedCallback(OnChangeUseSVC);
+            this.useGraphicsStateCollection.RegisterValueChangedCallback(OnChangeUseGSC);
+            this.GSCmatchGraphicsAPIOnly.RegisterValueChangedCallback(OnChangeGSCMatchGraphicsAPI);
+            this.GSCmatchTargetPlatformOnly.RegisterValueChangedCallback(OnChangeGSCMatchPlatform);
+
+
+
+            this.resetTimestampBtn.clicked += OnClickResetTimestamp;
+
+            this.debugListViewBtn.clicked += OnClickDebugListViewBtn;
+            this.debugShaderKeywordBtn.clicked += OnClickShaderKeywordDebugBtn;
+
+            this.orderIntField.RegisterCallback<FocusOutEvent>(OnLostFocusIntField);
+            this.executeOrderMinBtn.clicked += OnClickMinButton;
+            this.executeOrderMaxBtn.clicked += OnClickMaxButton;
+            this.addExcludeSVCBtn.clicked += OnClickAddExcludeSVC;
 
             SetUIActiveAtEnabled(enableToggle.value);
             SetUIActiveAtStrictMode(strictModeToggle.value);
 
-            SetupExcludeRules();
-            StrippingByVariantCollection.ResetData();
+            SetupExcludeSVCRules();
+            StripProcessShaders.ResetData();
         }
 
 
@@ -119,7 +153,24 @@ namespace UTJ.ShaderVariantStripping
         {
             StripShaderConfig.IgnoreStageOnlyKeyword = val.newValue;
         }
-        
+
+        private void OnChangeUseSVC(ChangeEvent<bool> val)
+        {
+            StripShaderConfig.UseSVC = val.newValue;
+        }
+        private void OnChangeUseGSC(ChangeEvent<bool> val)
+        {
+            StripShaderConfig.UseGSC = val.newValue;
+        }
+        private void OnChangeGSCMatchGraphicsAPI(ChangeEvent<bool> val)
+        {
+            StripShaderConfig.MatchGSCGraphicsAPI = val.newValue;
+        }
+        private void OnChangeGSCMatchPlatform(ChangeEvent<bool> val)
+        {
+            StripShaderConfig.MatchGSCPlatform = val.newValue;
+        }
+
 
         private void SetUIActiveAtEnabled(bool enabled)
         {
@@ -155,76 +206,61 @@ namespace UTJ.ShaderVariantStripping
             this.orderIntField.SetValueWithoutNotify(int.MaxValue);
         }
 
-        private void SetupExcludeRules()
+        private void SetupExcludeSVCRules()
         {
             this.collections = StripShaderConfig.GetExcludeVariantCollectionAsset();
-            excludeVariantListView.fixedItemHeight = 20;
-            excludeVariantListView.reorderable = true;
+            excludeSVCListView.fixedItemHeight = 20;
+            excludeSVCListView.reorderable = true;
 
-            excludeVariantListView.makeItem = () =>
+            excludeSVCListView.makeItem = () =>
             {
-                return new VariantCollectionUI(OnChangeExclueValue, OnRemoveExclude);
+                return new SVCListItem(OnChangeSVCExclueValue, OnRemoveExcludeSVC);
             };
-            excludeVariantListView.bindItem = (e, i) => {
-                var variantUI = (e as VariantCollectionUI);
+            excludeSVCListView.bindItem = (e, i) => {
+                var variantUI = (e as SVCListItem);
                 variantUI.variantCollection = collections[i];
                 variantUI.ListIndex = i;
             };
-            excludeVariantListView.itemsSource = collections;
+            excludeSVCListView.itemsSource = collections;
 
-            RefleshExcludeUI();
-
-
+            RefleshExcludeUI(this.excludeSVCListView);
         }
 
-        private void OnClickAddExclude()
+        private void OnClickAddExcludeSVC()
         {
             collections.Add(null); 
-            RefleshExcludeUI();
+            RefleshExcludeUI(this.excludeSVCListView);
 
         }
-        private void OnChangeExclueValue(VariantCollectionUI variantCollectionUI)
+        private void OnChangeSVCExclueValue(SVCListItem variantCollectionUI)
         {
             collections[variantCollectionUI.ListIndex] = variantCollectionUI.variantCollection;
             StripShaderConfig.SetExcludeVariantCollection(this.collections);
         }
 
-        private void OnRemoveExclude(VariantCollectionUI variantCollectionUI)
+        private void OnRemoveExcludeSVC(SVCListItem variantCollectionUI)
         {
             collections.RemoveAt(variantCollectionUI.ListIndex);
-            RefleshExcludeUI();
+            RefleshExcludeUI(this.excludeSVCListView);
             StripShaderConfig.SetExcludeVariantCollection(this.collections);
         }
 
-        private void RefleshExcludeUI()
+        private void RefleshExcludeUI(ListView listView)
         {
-#if UNITY_2021_2_OR_NEWER
-            excludeVariantListView.Rebuild();
+            listView.Rebuild();
             if (collections.Count == 0)
             {
-                excludeVariantListView.style.height = excludeVariantListView.fixedItemHeight;
+                listView.style.height = listView.fixedItemHeight;
             }
             else
             {
-                excludeVariantListView.style.height = excludeVariantListView.fixedItemHeight * collections.Count;
+                listView.style.height = listView.fixedItemHeight * collections.Count;
             }
-#else
-            excludeVariantListView.Refresh();
-            if (collections.Count == 0)
-            {
-                excludeVariantListView.style.height = excludeVariantListView.itemHeight;
-            }
-            else
-            {
-                excludeVariantListView.style.height = excludeVariantListView.itemHeight * collections.Count;
-            }
-#endif
-
         }
 
         void OnClickResetTimestamp()
         {
-            StrippingByVariantCollection.ResetData();
+            StripProcessShaders.ResetData();
 
         }
 

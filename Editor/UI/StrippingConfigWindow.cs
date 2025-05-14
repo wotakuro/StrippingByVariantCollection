@@ -89,7 +89,7 @@ namespace UTJ.ShaderVariantStripping
             SetUIActiveAtStrictMode(strictModeToggle.value);
 
             SetupExcludeRules();
-            StrippingByVariantCollection.ResetData();
+            StripProcessShaders.ResetData();
         }
 
 
@@ -165,10 +165,10 @@ namespace UTJ.ShaderVariantStripping
 
             excludeVariantListView.makeItem = () =>
             {
-                return new VariantCollectionUI(OnChangeExclueValue, OnRemoveExclude);
+                return new SVCListItem(OnChangeExclueValue, OnRemoveExclude);
             };
             excludeVariantListView.bindItem = (e, i) => {
-                var variantUI = (e as VariantCollectionUI);
+                var variantUI = (e as SVCListItem);
                 variantUI.variantCollection = collections[i];
                 variantUI.ListIndex = i;
             };
@@ -185,13 +185,13 @@ namespace UTJ.ShaderVariantStripping
             RefleshExcludeUI();
 
         }
-        private void OnChangeExclueValue(VariantCollectionUI variantCollectionUI)
+        private void OnChangeExclueValue(SVCListItem variantCollectionUI)
         {
             collections[variantCollectionUI.ListIndex] = variantCollectionUI.variantCollection;
             StripShaderConfig.SetExcludeVariantCollection(this.collections);
         }
 
-        private void OnRemoveExclude(VariantCollectionUI variantCollectionUI)
+        private void OnRemoveExclude(SVCListItem variantCollectionUI)
         {
             collections.RemoveAt(variantCollectionUI.ListIndex);
             RefleshExcludeUI();
@@ -226,7 +226,7 @@ namespace UTJ.ShaderVariantStripping
 
         void OnClickResetTimestamp()
         {
-            StrippingByVariantCollection.ResetData();
+            StripProcessShaders.ResetData();
 
         }
 
