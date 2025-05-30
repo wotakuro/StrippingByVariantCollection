@@ -65,7 +65,7 @@ namespace UTJ.ShaderVariantStripping
             if (StripShaderConfig.IsLogEnable)
             {
                 shaderVariantStripLogger.InitLogInfo();
-                shaderVariantStripLogger.SaveProjectVaraiants(this.projectSVCData.GetAllShaderVariantsInProjectSVC() );
+                shaderVariantStripLogger.SaveProjectVaraiants(this.projectSVCData.GetDebugStr() );
             }
             isInitialized = true;
         }

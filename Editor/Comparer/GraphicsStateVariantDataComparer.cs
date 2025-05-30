@@ -1,21 +1,23 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Rendering;
-//using static UTJ.ShaderVariantStripping.StrippingByVariantCollection;
+using static UTJ.ShaderVariantStripping.ProjectGSCData;
 
 namespace UTJ.ShaderVariantStripping
 {
-
-    class ShaderVarintInfoComparer : IEqualityComparer<ProjectSVCData.ShaderVariantsInfo>
+    internal class GraphicsStateVariantDataComparer : IEqualityComparer<GraphicsStateVariantData>
     {
+        public GraphicsStateVariantDataComparer()
+        {
+        }
 
-        public bool Equals(ProjectSVCData.ShaderVariantsInfo x, ProjectSVCData.ShaderVariantsInfo y)
+        public bool Equals(GraphicsStateVariantData x, GraphicsStateVariantData y)
         {
             if (x.shader != y.shader)
             {
                 return false;
             }
-            if (x.passType != y.passType)
+            if (x.passIdentifier != y.passIdentifier)
             {
                 return false;
             }
@@ -45,28 +47,25 @@ namespace UTJ.ShaderVariantStripping
                     return false;
                 }
             }
+
             return true;
         }
 
-        public int GetHashCode(ProjectSVCData.ShaderVariantsInfo obj)
+        public int GetHashCode(GraphicsStateVariantData obj)
         {
-            int hashCode = 0;
-            if (obj.shader != null)
+            int baseVal = (int)obj.passIdentifier.SubshaderIndex << 4 + (int)obj.passIdentifier.PassIndex;
+            if(obj.shader != null)
             {
-                hashCode += obj.shader.GetHashCode();
+                baseVal += obj.shader.GetHashCode();
             }
-            hashCode += obj.passType.GetHashCode();
             if (obj.keywordsForCheck != null)
             {
-                foreach (var keyword in obj.keywordsForCheck)
+                foreach (var str in obj.keywordsForCheck)
                 {
-                    hashCode += keyword.GetHashCode();
+                    baseVal += str.GetHashCode();
                 }
             }
-            return hashCode;
+            return baseVal;
         }
     }
-
-
-
 }

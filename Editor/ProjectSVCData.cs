@@ -72,10 +72,8 @@ namespace UTJ.ShaderVariantStripping
                 CollectVariants(this.shaderVariants, variantCollection);
             }
         }
-        internal Dictionary<Shader, HashSet<ShaderVariantsInfo>>  GetAllShaderVariantsInProjectSVC()
-        {
-            return shaderVariants;
-        }
+
+
 
         private static List<ShaderVariantCollection> GetProjectShaderVariantCollections()
         {
@@ -174,7 +172,7 @@ namespace UTJ.ShaderVariantStripping
              ShaderKeywordMaskGetterPerSnippet maskGetter)
         {
             var keywords = data.shaderKeywordSet.GetShaderKeywords();
-            var compiledKeyword = Convert(shader, keywords);
+            var compiledKeyword = ConvertShaderKeyword(shader, keywords);
 
             // have to include no keyword set.
             if (compiledKeyword.Count == 0)
@@ -224,7 +222,7 @@ namespace UTJ.ShaderVariantStripping
             return (removeIndex.Count > 0);
         }
 
-        private List<string> Convert(Shader shader, ShaderKeyword[] keywords)
+        private List<string> ConvertShaderKeyword(Shader shader, ShaderKeyword[] keywords)
         {
             List<string> converted = new List<string>(keywords.Length);
             for (int i = 0; i < keywords.Length; ++i)
@@ -291,6 +289,74 @@ namespace UTJ.ShaderVariantStripping
         }
 
 
+        internal string GetDebugStr()
+        {
+            StringBuilder projectVaritantsBuffer = new StringBuilder(1024 * 16);
+            StringBuilder shaderKeywordBuffer0 = new StringBuilder();
+            StringBuilder shaderKeywordBuffer1 = new StringBuilder();
+
+            var list = new List<ShaderVariantsInfo>(1024);
+            foreach (var variantHashSet in this.shaderVariants.Values)
+            {
+                foreach (var val in variantHashSet)
+                {
+                    list.Add(val);
+                }
+            }
+            list.Sort((a, b) =>
+            {
+                int shaderName = a.shader.name.CompareTo(b.shader.name);
+                if (shaderName != 0)
+                {
+                    return shaderName;
+                }
+
+                int passType = a.passType - b.passType;
+                if (passType != 0)
+                {
+                    return passType;
+                }
+
+                int keywordLengthVal = a.keywords.Length - b.keywords.Length;
+                if (keywordLengthVal != 0)
+                {
+                    return keywordLengthVal;
+                }
+
+                shaderKeywordBuffer0.Length = 0;
+                shaderKeywordBuffer1.Length = 0;
+
+                foreach (var keyword in a.keywords)
+                {
+                    shaderKeywordBuffer0.Append(keyword).Append(" ");
+                }
+                foreach (var keyword in b.keywords)
+                {
+                    shaderKeywordBuffer1.Append(keyword).Append(" ");
+                }
+
+                return shaderKeywordBuffer0.ToString().CompareTo(shaderKeywordBuffer1.ToString());
+            });
+
+            string shName = null;
+            foreach (var variant in list)
+            {
+                if (shName != variant.shader.name)
+                {
+                    projectVaritantsBuffer.Append(variant.shader.name);
+                    projectVaritantsBuffer.Append("\n");
+                    shName = variant.shader.name;
+                }
+                projectVaritantsBuffer.Append(" type:").
+                    Append(variant.passType).Append("\n").Append(" keyword:");
+                foreach (var keyword in variant.keywords)
+                {
+                    projectVaritantsBuffer.Append(keyword).Append(" ");
+                }
+                projectVaritantsBuffer.Append("\n\n");
+            }
+            return projectVaritantsBuffer.ToString();
+        }
 
 
     }

@@ -20,9 +20,6 @@ namespace UTJ.ShaderVariantStripping
 
         private StringBuilder includeVariantsBuffer;
         private StringBuilder excludeVariantsBuffer;
-        private StringBuilder shaderKeywordBuffer0;
-        private StringBuilder shaderKeywordBuffer1;
-        private StringBuilder projectVaritantsBuffer;
 
         private struct ShaderInfoData
         {
@@ -74,85 +71,20 @@ namespace UTJ.ShaderVariantStripping
             // string builder
             this.includeVariantsBuffer = new StringBuilder(1024);
             this.excludeVariantsBuffer = new StringBuilder(1024);
-            this.shaderKeywordBuffer0 = new StringBuilder();
-            this.shaderKeywordBuffer1 = new StringBuilder();
-            this.projectVaritantsBuffer = new StringBuilder();
         }
 
-        internal void SaveProjectVaraiants(Dictionary<Shader, HashSet<ShaderVariantsInfo>> shaderVariants)
+        internal void SaveProjectVaraiants(string debugStr)
         {
-
             if (!StripShaderConfig.IsLogEnable)
             {
                 return;
             }
-            var list = new List<ShaderVariantsInfo>(1024);
-            foreach (var variantHashSet in shaderVariants.Values)
-            {
-                foreach (var val in variantHashSet)
-                {
-                    list.Add(val);
-                }
-            }
-            list.Sort((a, b) =>
-            {
-                int shaderName = a.shader.name.CompareTo(b.shader.name);
-                if (shaderName != 0)
-                {
-                    return shaderName;
-                }
-
-                int passType = a.passType - b.passType;
-                if (passType != 0)
-                {
-                    return passType;
-                }
-
-                int keywordLengthVal = a.keywords.Length - b.keywords.Length;
-                if (keywordLengthVal != 0)
-                {
-                    return keywordLengthVal;
-                }
-
-                shaderKeywordBuffer0.Length = 0;
-                shaderKeywordBuffer1.Length = 0;
-
-                foreach (var keyword in a.keywords)
-                {
-                    shaderKeywordBuffer0.Append(keyword).Append(" ");
-                }
-                foreach (var keyword in b.keywords)
-                {
-                    shaderKeywordBuffer1.Append(keyword).Append(" ");
-                }
-
-                return shaderKeywordBuffer0.ToString().CompareTo(shaderKeywordBuffer1.ToString());
-            });
-
-            string shName = null;
-            foreach (var variant in list)
-            {
-                if (shName != variant.shader.name)
-                {
-                    projectVaritantsBuffer.Append(variant.shader.name);
-                    projectVaritantsBuffer.Append("\n");
-                    shName = variant.shader.name;
-                }
-                projectVaritantsBuffer.Append(" type:").
-                    Append(variant.passType).Append("\n").Append(" keyword:");
-                foreach (var keyword in variant.keywords)
-                {
-                    projectVaritantsBuffer.Append(keyword).Append(" ");
-                }
-                projectVaritantsBuffer.Append("\n\n");
-            }
-
             string dir = LogDirectory + "/" + dateTimeStr;
             if (!System.IO.Directory.Exists(dir))
             {
                 System.IO.Directory.CreateDirectory(dir);
             }
-            System.IO.File.WriteAllText(dir + "/ProjectVariants.txt", projectVaritantsBuffer.ToString());
+            System.IO.File.WriteAllText(dir + "/ProjectVariants.txt", debugStr);
         }
 
         internal void SaveResult(Shader shader, ShaderSnippetData snippet)
