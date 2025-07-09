@@ -6,7 +6,6 @@ using UnityEngine;
 
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
-using static UTJ.ShaderVariantStripping.ProjectSVCData;
 
 
 namespace UTJ.ShaderVariantStripping
@@ -23,6 +22,11 @@ namespace UTJ.ShaderVariantStripping
             public List<GraphicsStateKeyData> stateKeyData;
 
             public List<string> keywordsForCheck;
+
+            public GraphicsStateVariantData()
+            {
+
+            }
 
             public GraphicsStateVariantData(GraphicsStateCollection.ShaderVariant variant, GraphicsStateKeyData keyData)
             {
@@ -78,7 +82,10 @@ namespace UTJ.ShaderVariantStripping
 
             public void AppendStateKeyData(GraphicsStateKeyData keyData)
             {
-                this.stateKeyData.Add(keyData);
+                if (!this.stateKeyData.Contains(keyData))
+                {
+                    this.stateKeyData.Add(keyData);
+                }
             }
         }
 
@@ -98,24 +105,82 @@ namespace UTJ.ShaderVariantStripping
                 this.qualityLevelName = collection.qualityLevelName;
             }
 
+            public bool IsInTheList(List<GraphicsStateKeyData> list)
+            {
+                foreach (var data in list)
+                {
+                    if ((this.version == data.version) &&
+                    (this.graphicsDeviceType == data.graphicsDeviceType) &&
+                    (this.runtimePlatform == data.runtimePlatform) &&
+                    (this.qualityLevelName == data.qualityLevelName))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
             public bool IsMatchData(ref GraphcisStateRequestCondition condition)
             {
-                if (condition.graphicsDeviceMatch && condition.graphicsDeviceType != this.graphicsDeviceType)
+                if (condition.graphicsDeviceMatch)
                 {
+                    switch (condition.shaderPlatform)
+                    {
+                        case ShaderCompilerPlatform.D3D:
+                            break;
+                        case ShaderCompilerPlatform.Vulkan:
+                            break;
+                        case ShaderCompilerPlatform.XboxOneD3D11:
+                            break;
+                        case ShaderCompilerPlatform.XboxOneD3D12:
+                            break;
+                        case ShaderCompilerPlatform.PS4:
+                            break;
+                        case ShaderCompilerPlatform.PS5:
+                            break;
+                        case ShaderCompilerPlatform.PS5NGGC:
+                            break;
+                        case ShaderCompilerPlatform.GameCoreXboxOne:
+                            break;
+                        case ShaderCompilerPlatform.GLES3x:
+                            return (this.graphicsDeviceType == GraphicsDeviceType.OpenGLES3);
+                        case ShaderCompilerPlatform.WebGPU:
+                            return (this.graphicsDeviceType == GraphicsDeviceType.WebGPU);
+                        case ShaderCompilerPlatform.Metal:
+                            return (this.graphicsDeviceType == GraphicsDeviceType.Metal);
+                        case ShaderCompilerPlatform.OpenGLCore:
+                            return (this.graphicsDeviceType == GraphicsDeviceType.OpenGLCore);
+                    }
+
                     return false;
                 }
-                if (condition.runtimePlatformMacth && condition.runtimePlatform == this.runtimePlatform)
+                if (condition.runtimePlatformMacth)
                 {
+                    switch (condition.buildTarget)
+                    {
+                        case BuildTarget.Android:
+                            break;
+                        case BuildTarget.iOS:
+                            break;
+                    }
                     return false;
                 }
                 return true;
             }
         }
         public struct GraphcisStateRequestCondition {
-            public GraphicsDeviceType graphicsDeviceType;
-            public RuntimePlatform runtimePlatform;
+            public ShaderCompilerPlatform shaderPlatform;
+            public BuildTarget buildTarget;
             public bool graphicsDeviceMatch;
             public bool runtimePlatformMacth;
+
+            public void SetDataFrom(ref ShaderCompilerData data)
+            {
+                this.shaderPlatform = data.shaderCompilerPlatform;
+                this.buildTarget = data.buildTarget;
+                   
+            }
         }
 
 
@@ -123,12 +188,13 @@ namespace UTJ.ShaderVariantStripping
         private Dictionary<Shader, HashSet<GraphicsStateVariantData>> graphicsStatesVariants;
 
         Dictionary<Shader, List< GraphicsStateKeyData > > stateKeyData;
-
         private List<GraphicsStateCollection.ShaderVariant> variantBuffer;
+
+        private GraphicsStateVariantData checkData;
 
         internal bool IsExistInGSC(Shader shader, 
             ref ShaderSnippetData data,
-            ref GraphcisStateRequestCondition condition)
+            GraphcisStateRequestCondition condition)
         {
             List<GraphicsStateKeyData> list;
             if (this.stateKeyData.TryGetValue(shader, out list))
@@ -144,20 +210,29 @@ namespace UTJ.ShaderVariantStripping
         }
 
         internal bool IsExistVariantInGSC(
-            Shader shader, ref ShaderSnippetData snippet, ref ShaderCompilerData data,
+            Shader shader, ref ShaderSnippetData snippet,  ShaderCompilerData data,
              ShaderKeywordMaskGetterPerSnippet maskGetter,
-            ref GraphcisStateRequestCondition condition)
+             ref GraphcisStateRequestCondition condition)
         {
+            var originData = new GraphicsStateVariantData();
+            originData.SetupFromCompilerData(shader, ref snippet, ref data);
 
-            HashSet<GraphicsStateVariantData> hashData;
+            HashSet < GraphicsStateVariantData> hashData;
             if(this.graphicsStatesVariants.TryGetValue(shader, out hashData) ){
+                this.checkData.SetupFromCompilerData(shader, ref snippet, ref data);
                 GraphicsStateVariantData variantData;
-//                hashData.TryGetValue(, out variantData);
+                if( hashData.TryGetValue(checkData, out variantData))
+                {
+                    foreach (var state in variantData.stateKeyData)
+                    {
+                        if (state.IsMatchData(ref condition)) { return true; }
+                    }
+                }
             }
             return false;
         }
 
-        internal void Initialize()
+        public void Initialize()
         {
             var statesCollections = GetProjectGraphicsStateCollections();
             this.graphicsStatesVariants = new Dictionary<Shader, HashSet<GraphicsStateVariantData>>();
@@ -168,6 +243,60 @@ namespace UTJ.ShaderVariantStripping
                 CollectGraphicsState(stateCollection);
             }
         }
+        #region DEBUG
+        public void SaveDebugLog()
+        {
+            var sb = new System.Text.StringBuilder(1024);
+
+            foreach(var kvs in this.stateKeyData)
+            {
+                sb.AppendLine("---------------------------");
+                sb.AppendLine(kvs.Key.name);
+                foreach (var state in kvs.Value)
+                {
+                    sb.Append("  ");
+                    AppendStateKeyDate(sb, state);
+                    sb.Append('\n');
+                }
+            }
+            System.IO.File.WriteAllText("GSCstateKeyDebug.txt", sb.ToString());
+            sb.Clear();
+
+            foreach(var kvs in this.graphicsStatesVariants)
+            {
+                sb.AppendLine("---------------------------");
+                sb.AppendLine(kvs.Key.name);
+                foreach (var variantData in kvs.Value)
+                {
+                    sb.Append("  ").Append(variantData.shader.name).Append("::").
+                        Append(variantData.passIdentifier.SubshaderIndex).Append("-").Append(variantData.passIdentifier.PassIndex);
+                    sb.Append("\n    Keyword:");
+                    foreach(var keyword in variantData.keywordsForCheck)
+                    {
+                        sb.Append(" ").Append(keyword);
+                    }
+                    sb.AppendLine("");
+
+                    // stateData
+                    foreach(var state in variantData.stateKeyData)
+                    {
+                        sb.Append("      State:");
+                        AppendStateKeyDate(sb, state);
+                        sb.Append("\n");
+                    }
+                }
+            }
+            System.IO.File.WriteAllText("GSCvariantDebug.txt", sb.ToString());
+
+        }
+        private static void AppendStateKeyDate(System.Text.StringBuilder sb,GraphicsStateKeyData state)
+        {
+
+            sb.Append(state.graphicsDeviceType).Append(":").
+                Append(state.runtimePlatform).Append(":ver_").Append(state.version).Append(":").
+                Append(state.qualityLevelName);
+        }
+        #endregion DEBUG
 
         private void CollectGraphicsState(GraphicsStateCollection graphicsStates)
         {
@@ -209,6 +338,8 @@ namespace UTJ.ShaderVariantStripping
                 GraphicsStateVariantData variantDataInHash;
                 if ( !graphicsStatesVariants.TryGetValue(shader, out variantDatasHash) ){
                     variantDatasHash = new HashSet<GraphicsStateVariantData>(new GraphicsStateVariantDataComparer());
+                    variantDatasHash.Add(variantData);
+                    this.graphicsStatesVariants.Add(shader, variantDatasHash);
                 }
                 if (variantDatasHash.TryGetValue(variantData, out variantDataInHash))
                 {
@@ -220,11 +351,6 @@ namespace UTJ.ShaderVariantStripping
                 }
             }
         }
-
-
-
-
-
 
         private static List<GraphicsStateCollection> GetProjectGraphicsStateCollections()
         {

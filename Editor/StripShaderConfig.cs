@@ -36,6 +36,7 @@ namespace UTJ.ShaderVariantStripping
 
         }
 
+
         private static ConfigData currentConfig;
 
         public static bool IsEnable
@@ -134,6 +135,9 @@ namespace UTJ.ShaderVariantStripping
 
         // from U6
         #region UNITY_6
+
+
+
         public static bool UseSVC
         {
             get { return !currentConfig.disableSVC; }

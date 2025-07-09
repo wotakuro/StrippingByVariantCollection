@@ -26,6 +26,7 @@ using UnityEditor.Rendering;
 using UnityEditor.Build;
 using UnityEngine.Rendering;
 using System.Text;
+using Unity.Android.Gradle.Manifest;
 
 
 namespace UTJ.ShaderVariantStripping
@@ -40,6 +41,10 @@ namespace UTJ.ShaderVariantStripping
         private ShaderVariantStripLogger shaderVariantStripLogger = new ShaderVariantStripLogger();
         private ProjectSVCData projectSVCData = new ProjectSVCData();
 
+#if UNITY_6000_0_OR_NEWER
+        private ProjectGSCData projectGSCData = new ProjectGSCData();
+        private List<ProjectGSCData.GraphcisStateRequestCondition> conditionsForPerShader;
+#endif
 
 
         public StripProcessShaders()
@@ -62,6 +67,10 @@ namespace UTJ.ShaderVariantStripping
             this.compileResultBuffer = new List<ShaderCompilerData>(1024);
             this.projectSVCData.Initialize();
 
+#if UNITY_6000_0_OR_NEWER
+            this.projectGSCData.Initialize();
+#endif
+
             if (StripShaderConfig.IsLogEnable)
             {
                 shaderVariantStripLogger.InitLogInfo();
@@ -80,6 +89,30 @@ namespace UTJ.ShaderVariantStripping
                 return StripShaderConfig.Order;
             }
         }
+
+#if UNITY_6000_0_OR_NEWER
+        private void ConstructGSCConditions(List<ProjectGSCData.GraphcisStateRequestCondition> list,
+            IList<ShaderCompilerData> shaderCompilerData)
+        {
+            list.Clear();
+            for (int i = 0; i < shaderCompilerData.Count; ++i)
+            {
+                var gcsConditionData = new ProjectGSCData.GraphcisStateRequestCondition()
+                {
+                    graphicsDeviceMatch = StripShaderConfig.MatchGSCGraphicsAPI,
+                    runtimePlatformMacth = StripShaderConfig.MatchGSCPlatform,
+                    shaderPlatform = shaderCompilerData[i].shaderCompilerPlatform,
+                    buildTarget = shaderCompilerData[i].buildTarget,
+                };
+
+                if (!list.Contains(gcsConditionData))
+                {
+                    list.Add(gcsConditionData);
+                }
+            }
+        }
+#endif
+
 
         public void OnProcessShader(Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> shaderCompilerData)
         {
@@ -101,8 +134,35 @@ namespace UTJ.ShaderVariantStripping
             }
             shaderVariantStripLogger.ClearStringBuffers();
 
-            bool isExistShader = this.projectSVCData.IsExistSVC( shader);
-            if (!isExistShader)
+            bool isExistShaderInSVC = this.projectSVCData.IsExistSVC( shader);
+
+#if UNITY_6000_0_OR_NEWER
+
+            var gcsConditionData = new ProjectGSCData.GraphcisStateRequestCondition()
+            {
+                graphicsDeviceMatch = StripShaderConfig.MatchGSCGraphicsAPI,
+                runtimePlatformMacth = StripShaderConfig.MatchGSCPlatform
+            };
+            bool isExistShaderInGSC = false;
+            if(conditionsForPerShader == null)
+            {
+                conditionsForPerShader = new List<ProjectGSCData.GraphcisStateRequestCondition>();
+            }
+            this.ConstructGSCConditions(conditionsForPerShader, shaderCompilerData);
+            foreach (var condition in conditionsForPerShader) {
+                bool flag = this.projectGSCData.IsExistInGSC(shader, ref snippet, condition);
+                if (flag)
+                {
+                    isExistShaderInGSC = true;
+                    //break;
+                }
+#if DEBUG
+                Debug.Log("Condition " + condition.graphicsDeviceMatch);
+#endif
+            }
+#endif
+
+            if (!isExistShaderInSVC)
             {
                 if (StripShaderConfig.StrictVariantStripping)
                 {
@@ -122,10 +182,25 @@ namespace UTJ.ShaderVariantStripping
             this.compileResultBuffer.Clear();
             for (int i = 0; i < shaderCompilerData.Count; ++i)
             {
-                bool isExistsVariant = projectSVCData.IsExistInSVC(variantsHashSet, shader, snippet, shaderCompilerData[i],maskGetter);
+                bool isExist = false;
 
+
+                // use shader variant collection
+                if (StripShaderConfig.UseSVC)
+                {
+                    isExist = projectSVCData.IsExistInSVC(variantsHashSet, shader, snippet, shaderCompilerData[i], maskGetter);
+                }
+#if UNITY_6000_0_OR_NEWER
+                if (StripShaderConfig.UseGSC && !isExist)
+                {
+
+                    bool isExistsVariantInGSC = projectGSCData.IsExistVariantInGSC(shader,
+                        ref snippet, shaderCompilerData[i], maskGetter, ref gcsConditionData);
+                    isExist |= isExistShaderInGSC;
+                }
+#endif
                 /// log 
-                if (isExistsVariant)
+                if (isExist)
                 {
                     shaderVariantStripLogger.AppendIncludeShaderInfo(shader, snippet, shaderCompilerData[i]);
                     this.compileResultBuffer.Add(shaderCompilerData[i]);
@@ -134,9 +209,11 @@ namespace UTJ.ShaderVariantStripping
                 {
                     shaderVariantStripLogger.AppendExcludeShaderInfo(shader, snippet, shaderCompilerData[i]);
                 }
+
             }
 
-            // CreateList
+
+            // CreateList             
             shaderCompilerData.Clear();
             foreach (var data in this.compileResultBuffer)
             {
