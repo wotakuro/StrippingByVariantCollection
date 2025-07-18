@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Unity.Android.Gradle.Manifest;
 using UnityEditor;
 using UnityEditor.Rendering;
@@ -6,6 +7,7 @@ using UnityEngine;
 
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
+using static UTJ.ShaderVariantStripping.ProjectSVCData;
 
 
 namespace UTJ.ShaderVariantStripping
@@ -190,7 +192,9 @@ namespace UTJ.ShaderVariantStripping
         Dictionary<Shader, List< GraphicsStateKeyData > > stateKeyData;
         private List<GraphicsStateCollection.ShaderVariant> variantBuffer;
 
-        private GraphicsStateVariantData checkData;
+        private GraphicsStateVariantData checkData = new GraphicsStateVariantData();
+
+        private GraphicsStateVariantDataComparer comparer = new GraphicsStateVariantDataComparer();
 
         internal bool IsExistInGSC(Shader shader, 
             ref ShaderSnippetData data,
@@ -209,26 +213,70 @@ namespace UTJ.ShaderVariantStripping
             return false;
         }
 
-        internal bool IsExistVariantInGSC(
-            Shader shader, ref ShaderSnippetData snippet,  ShaderCompilerData data,
-             ShaderKeywordMaskGetterPerSnippet maskGetter,
-             ref GraphcisStateRequestCondition condition)
-        {
-            var originData = new GraphicsStateVariantData();
-            originData.SetupFromCompilerData(shader, ref snippet, ref data);
 
-            HashSet < GraphicsStateVariantData> hashData;
-            if(this.graphicsStatesVariants.TryGetValue(shader, out hashData) ){
-                this.checkData.SetupFromCompilerData(shader, ref snippet, ref data);
-                GraphicsStateVariantData variantData;
-                if( hashData.TryGetValue(checkData, out variantData))
+        internal HashSet<GraphicsStateVariantData> GetVariantsHashSet(Shader shader, ShaderKeywordMaskGetterPerSnippet maskGetter)
+        {
+            HashSet<GraphicsStateVariantData> originHashData;
+            if (!this.graphicsStatesVariants.TryGetValue(shader, out originHashData))
+            {
+                return null;
+            }
+            HashSet<GraphicsStateVariantData> hashData = CreateCurrentStageVariantsInfo(originHashData,maskGetter);
+            return hashData;
+        }
+
+
+
+        private static HashSet<GraphicsStateVariantData> CreateCurrentStageVariantsInfo(HashSet<GraphicsStateVariantData> origin,
+            ShaderKeywordMaskGetterPerSnippet maskGetter)
+        {
+            if (!maskGetter.HasCutoffKeywords())
+            {
+                return origin;
+            }
+            HashSet<GraphicsStateVariantData> copyData = new HashSet<GraphicsStateVariantData>(origin, new GraphicsStateVariantDataComparer());
+            foreach (var info in origin)
+            {
+                var newKeywords = maskGetter.ConvertValidOnlyKeywords(info.keywordsForCheck);
+                if (newKeywords == null)
                 {
-                    foreach (var state in variantData.stateKeyData)
-                    {
-                        if (state.IsMatchData(ref condition)) { return true; }
-                    }
+                    continue;
+                }
+                var newVariant = new GraphicsStateVariantData() {
+                    keywordsForCheck = newKeywords,
+                    shader = info.shader,
+                    passIdentifier = info.passIdentifier,
+                    stateKeyData = info.stateKeyData,
+                };
+                
+                // todo
+                if (!copyData.Contains(newVariant))
+                {
+                    copyData.Add(newVariant);
                 }
             }
+            return copyData;
+        }
+
+
+        internal bool IsExistVariantInGSC(
+            Shader shader, ref ShaderSnippetData snippet, ShaderCompilerData data,
+             ref GraphcisStateRequestCondition condition,
+             HashSet<GraphicsStateVariantData> hashData)
+        {
+            if (hashData == null) { return false; }
+            var originData = new GraphicsStateVariantData();
+            originData.SetupFromCompilerData(shader, ref snippet, ref data);
+            this.checkData.SetupFromCompilerData(shader, ref snippet, ref data);
+            GraphicsStateVariantData variantData;
+            if (hashData.TryGetValue(checkData, out variantData))
+            {
+                foreach (var state in variantData.stateKeyData)
+                {
+                    if (state.IsMatchData(ref condition)) { return true; }
+                }
+            }
+
             return false;
         }
 
@@ -337,7 +385,7 @@ namespace UTJ.ShaderVariantStripping
                 HashSet<GraphicsStateVariantData> variantDatasHash;
                 GraphicsStateVariantData variantDataInHash;
                 if ( !graphicsStatesVariants.TryGetValue(shader, out variantDatasHash) ){
-                    variantDatasHash = new HashSet<GraphicsStateVariantData>(new GraphicsStateVariantDataComparer());
+                    variantDatasHash = new HashSet<GraphicsStateVariantData>(comparer);
                     variantDatasHash.Add(variantData);
                     this.graphicsStatesVariants.Add(shader, variantDatasHash);
                 }

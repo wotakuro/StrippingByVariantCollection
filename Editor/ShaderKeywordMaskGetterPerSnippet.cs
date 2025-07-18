@@ -219,6 +219,33 @@ namespace UTJ
             return newKeywords;
         }
 
+        public List<string> ConvertValidOnlyKeywords(List<string> keywords)
+        {
+            if (keywords == null) { return null; }
+            int validCount = 0;
+            int length = keywords.Count;
+            for (int i = 0; i < length; ++i)
+            {
+                if (ValidKeyword(keywords[i]))
+                {
+                    validCount++;
+                }
+            }
+            if (validCount == length || validCount == 0)
+            {
+                return null;
+            }
+            var newKeywords = new List<string>(validCount);
+            for (int i = 0; i < length; ++i)
+            {
+                if (ValidKeyword(keywords[i]))
+                {
+                    newKeywords.Add(keywords[i]);
+                }
+            }
+            return newKeywords;
+        }
+
         private static int GetTypeIndex(ShaderType type)
         {
             switch(type)

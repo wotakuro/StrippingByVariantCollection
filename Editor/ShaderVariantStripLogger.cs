@@ -73,7 +73,7 @@ namespace UTJ.ShaderVariantStripping
             this.excludeVariantsBuffer = new StringBuilder(1024);
         }
 
-        internal void SaveProjectVaraiants(string debugStr)
+        internal void SaveProjectSVCVaraiants(string debugStr)
         {
             if (!StripShaderConfig.IsLogEnable)
             {
@@ -84,7 +84,7 @@ namespace UTJ.ShaderVariantStripping
             {
                 System.IO.Directory.CreateDirectory(dir);
             }
-            System.IO.File.WriteAllText(dir + "/ProjectVariants.txt", debugStr);
+            System.IO.File.WriteAllText(dir + "/ProjectSVCData.txt", debugStr);
         }
 
         internal void SaveResult(Shader shader, ShaderSnippetData snippet)
@@ -138,9 +138,14 @@ namespace UTJ.ShaderVariantStripping
 
         internal void ClearStringBuffers()
         {
-
-            this.includeVariantsBuffer.Length = 0;
-            this.excludeVariantsBuffer.Length = 0;
+            if (includeVariantsBuffer != null)
+            {
+                this.includeVariantsBuffer.Length = 0;
+            }
+            if (excludeVariantsBuffer != null)
+            {
+                this.excludeVariantsBuffer.Length = 0;
+            }
         }
 
         internal void AppendIncludeShaderInfo(Shader shader, ShaderSnippetData snippet, ShaderCompilerData compilerData)
@@ -161,12 +166,15 @@ namespace UTJ.ShaderVariantStripping
             }
             if (sb.Length == 0)
             {
-                sb.Append("Shader:" + shader.name).Append("\n");
+                sb.Append("Shader:").Append(shader.name).Append("\n");
+                sb.Append("SubShader:" ).Append(snippet.pass.SubshaderIndex).Append("\nPass;").Append(snippet.pass.PassIndex).Append("\n");
                 sb.Append("ShaderType:").Append(snippet.shaderType).Append("\n").
                     Append("PassName:").Append(snippet.passName).Append("\n").
                     Append("PassType:").Append(snippet.passType).Append("\n\n");
             }
 
+            sb.Append("BuildTarget:").Append(compilerData.buildTarget).Append("\nShaderPlatform:").Append(compilerData.shaderCompilerPlatform);
+            
             var keywords = compilerData.shaderKeywordSet.GetShaderKeywords();
 
             var sortKeywords = new ShaderKeyword[keywords.Length];
@@ -291,7 +299,7 @@ namespace UTJ.ShaderVariantStripping
                 shortShaderName = shortShaderName.Substring(lastSlashIndex + 1);
             }
             string shaderName = shader.name.Replace('/', '_').Replace('|', '-');
-            string name = shortShaderName + "_" + snippet.shaderType.ToString() + "_" + snippet.passName + "_" + snippet.passType;
+            string name = shortShaderName + "_" + snippet.shaderType.ToString() + "_" + snippet.pass.SubshaderIndex + "_" + snippet.pass.PassIndex;
             string dir = dirHead + shaderName;
 
             if (!System.IO.Directory.Exists(dir))
