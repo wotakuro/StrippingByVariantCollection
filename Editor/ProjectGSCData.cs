@@ -130,21 +130,26 @@ namespace UTJ.ShaderVariantStripping
                     switch (condition.shaderPlatform)
                     {
                         case ShaderCompilerPlatform.D3D:
-                            break;
+                            return (this.graphicsDeviceType == GraphicsDeviceType.Direct3D11) ||
+                                 (this.graphicsDeviceType == GraphicsDeviceType.Direct3D12);
                         case ShaderCompilerPlatform.Vulkan:
-                            break;
+                            return (this.graphicsDeviceType == GraphicsDeviceType.Vulkan);
                         case ShaderCompilerPlatform.XboxOneD3D11:
-                            break;
-                        case ShaderCompilerPlatform.XboxOneD3D12:
-                            break;
-                        case ShaderCompilerPlatform.PS4:
-                            break;
-                        case ShaderCompilerPlatform.PS5:
-                            break;
-                        case ShaderCompilerPlatform.PS5NGGC:
-                            break;
                         case ShaderCompilerPlatform.GameCoreXboxOne:
-                            break;
+                        case ShaderCompilerPlatform.XboxOneD3D12:
+                            return (this.graphicsDeviceType == GraphicsDeviceType.XboxOne) ||
+                                (this.graphicsDeviceType == GraphicsDeviceType.XboxOneD3D12) ||
+                             (this.graphicsDeviceType == GraphicsDeviceType.GameCoreXboxOne) ||
+                             (this.graphicsDeviceType == GraphicsDeviceType.GameCoreXboxSeries);
+
+                        case ShaderCompilerPlatform.PS4:
+                            return (this.graphicsDeviceType == GraphicsDeviceType.PlayStation4);
+                        case ShaderCompilerPlatform.PS5:
+                        case ShaderCompilerPlatform.PS5NGGC:
+                            return (this.graphicsDeviceType == GraphicsDeviceType.PlayStation5) ||
+                                (this.graphicsDeviceType == GraphicsDeviceType.PlayStation5NGGC);
+
+
                         case ShaderCompilerPlatform.GLES3x:
                             return (this.graphicsDeviceType == GraphicsDeviceType.OpenGLES3);
                         case ShaderCompilerPlatform.WebGPU:
@@ -213,6 +218,27 @@ namespace UTJ.ShaderVariantStripping
             return false;
         }
 
+#if DEBUG
+        internal void DebugCondition(Shader shader)
+        {
+            List<GraphicsStateKeyData> list;
+            if (this.stateKeyData.TryGetValue(shader, out list))
+            {
+                foreach (var key in list)
+                {
+                    Debug.Log("[Cnd]" + shader.name + "\n" + 
+                        key.runtimePlatform +"::" + key.graphicsDeviceType +"::" + key.qualityLevelName +"::"+key.version);
+                }
+
+            }
+            else
+            {
+                Debug.Log("[Cnd] Not found " + shader.name);
+            }
+
+        }
+#endif
+
 
         internal HashSet<GraphicsStateVariantData> GetVariantsHashSet(Shader shader, ShaderKeywordMaskGetterPerSnippet maskGetter)
         {
@@ -273,7 +299,9 @@ namespace UTJ.ShaderVariantStripping
             {
                 foreach (var state in variantData.stateKeyData)
                 {
-                    if (state.IsMatchData(ref condition)) { return true; }
+                    if (state.IsMatchData(ref condition)) {
+                        return true; 
+                    }
                 }
             }
 

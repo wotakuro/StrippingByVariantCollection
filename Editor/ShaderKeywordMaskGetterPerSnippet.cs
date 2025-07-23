@@ -5,6 +5,7 @@ using UnityEditor;
 using UnityEditor.Rendering;
 using System.Text;
 using System.Linq;
+using UTJ.ShaderVariantStripping;
 
 namespace UTJ
 {
@@ -146,8 +147,7 @@ namespace UTJ
         {
             get
             {
-                return this.shader.name.Replace("/", "_") +"-"+ this.snippetData.shaderType + "-" +
-                    this.snippetData.pass.SubshaderIndex + "-" + this.snippetData.pass.PassIndex + ".txt";
+                return ShaderNameUtility.GetShaderShortNameForPath(shader) + ShaderNameUtility.GetSnipetName(snippetData) + ".txt";
             }
         }
 

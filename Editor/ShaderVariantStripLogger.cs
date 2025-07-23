@@ -94,10 +94,10 @@ namespace UTJ.ShaderVariantStripping
             {
                 return;
             }
-            string shaderName = shader.name.Replace("/", "_");
+            string shaderName = ShaderNameUtility.GetShaderShortNameForPath(shader);
             string includeDir = LogDirectory + "/" + dateTimeStr + "/Include/" + shaderName;
             string excludeDir = LogDirectory + "/" + dateTimeStr + "/Exclude/" + shaderName;
-            string name = shaderName + "_" + snippet.shaderType.ToString() + "_" + snippet.passName + "_" + snippet.passType;
+            string name = shaderName + ShaderNameUtility.GetSnipetName(snippet);
 
             if (includeVariantsBuffer.Length != 0)
             {
@@ -173,7 +173,7 @@ namespace UTJ.ShaderVariantStripping
                     Append("PassType:").Append(snippet.passType).Append("\n\n");
             }
 
-            sb.Append("BuildTarget:").Append(compilerData.buildTarget).Append("\nShaderPlatform:").Append(compilerData.shaderCompilerPlatform);
+            sb.Append("BuildTarget:").Append(compilerData.buildTarget).Append("\nShaderPlatform:").Append(compilerData.shaderCompilerPlatform).Append("\n");
             
             var keywords = compilerData.shaderKeywordSet.GetShaderKeywords();
 
@@ -255,7 +255,8 @@ namespace UTJ.ShaderVariantStripping
 
 
 
-        internal void LogAllInVariantColllection(Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> shaderCompilerData)
+        internal void LogAllInVariantColllection(Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> shaderCompilerData,
+            bool isStripEnable)
         {
 
             if (!StripShaderConfig.IsLogEnable)
@@ -266,7 +267,13 @@ namespace UTJ.ShaderVariantStripping
             {
                 AppendShaderInfo(includeVariantsBuffer, shader, snippet, shaderCompilerData[i]);
             }
-            this.includeVariantsBuffer.Append("\n==================\n");
+            if (isStripEnable)
+            {
+                this.includeVariantsBuffer.Append("\n========= Logged AllVaraint Info =========\n");
+            }
+            else {
+                this.includeVariantsBuffer.Append("\n========= Skip Stripping. So AllVaraint Info =========\n");
+            }
 
             string filePath;
             GetPathNames(LogDirectory + "/" + dateTimeStr + "/Include/", shader, snippet, out filePath);
@@ -283,7 +290,7 @@ namespace UTJ.ShaderVariantStripping
             {
                 AppendShaderInfo(excludeVariantsBuffer, shader, snippet, shaderCompilerData[i]);
             }
-            this.excludeVariantsBuffer.Append("\n==================\n");
+            this.excludeVariantsBuffer.Append("\n========= Logged All variantInfo=========\n");
 
             string filePath;
             GetPathNames(LogDirectory + "/" + dateTimeStr + "/Exclude/", shader, snippet, out filePath);
@@ -292,13 +299,8 @@ namespace UTJ.ShaderVariantStripping
 
         private static void GetPathNames(string dirHead, Shader shader, ShaderSnippetData snippet, out string filePath)
         {
-            var shortShaderName = shader.name.Replace('|', '-');
-            int lastSlashIndex = shortShaderName.LastIndexOf('/');
-            if (lastSlashIndex != -1)
-            {
-                shortShaderName = shortShaderName.Substring(lastSlashIndex + 1);
-            }
-            string shaderName = shader.name.Replace('/', '_').Replace('|', '-');
+            var shortShaderName = ShaderNameUtility.GetShaderShortNameForPath(shader);
+            string shaderName = ShaderNameUtility.GetShaderNameForPath(shader);
             string name = shortShaderName + "_" + snippet.shaderType.ToString() + "_" + snippet.pass.SubshaderIndex + "_" + snippet.pass.PassIndex;
             string dir = dirHead + shaderName;
 
@@ -334,7 +336,7 @@ namespace UTJ.ShaderVariantStripping
             tmpSb.Append("ExecuteTime:").Append(endTime - startTime).Append(" sec\n").
                 Append("Variants:").Append(startVariants).Append("->").Append(endVariants).Append("\n");
 
-            System.IO.File.AppendAllText(dir + "/" + shader.name.Replace("/", "_") + "_execute.log",
+            System.IO.File.AppendAllText(dir + "/" + ShaderNameUtility.GetShaderShortNameForPath(shader) + "_execute.log",
                 tmpSb.ToString());
 
             var data = new ShaderInfoData(shader, snippet);

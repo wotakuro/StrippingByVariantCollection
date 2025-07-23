@@ -7,6 +7,7 @@
                     <ui:Toggle label="Log Variant" name="LogEnable" tooltip="Log files are placed under &quot;./ShaderVariants/Builds&quot;" />
                     <ui:Button text="Reset Timestamp" display-tooltip-when-elided="true" name="ResetTimestampBtn" />
                 </ui:VisualElement>
+                <ui:Toggle label="Strict Variant Stripping" name="StrictVariantStripping" tooltip="Strict mode enabled -&gt; remove all variants if the shader is not in ShaderVariantColleciton." />
                 <ui:Foldout text="Advanced">
                     <ui:Toggle label="Disable Unity Stripping" name="DisableUnityStrip" tooltip="Disable the  &quot;IPreprocessShaders&quot; in the Unity or UnityEngine or UnityEditor namespace  by editing IL." />
                     <uie:IntegerField label="Script Execute Order" value="42" name="ExecuteOrder" tooltip="The order of this IProcessShaders" />
@@ -23,7 +24,6 @@
         <ui:Tab label="ShaderVariantCollection" name="ShaderVariantCollection">
             <ui:VisualElement style="flex-grow: 1; margin-top: 10px; margin-left: 5px;">
                 <ui:Toggle label="Use ShaderVarinatCollection" name="UseSVC" />
-                <ui:Toggle label="Strict Variant Stripping" name="StrictVariantStripping" tooltip="Strict mode enabled -&gt; remove all variants if the shader is not in ShaderVariantColleciton." />
                 <ui:Toggle label="IgnoreStgeOnlyKeyword" name="IgnoreStgeOnlyKeyword" />
                 <ui:Label text="Exculude Stripping Rule" display-tooltip-when-elided="true" name="Label" style="margin-left: 10px;" />
                 <ui:ScrollView style="margin-left: 20px;">

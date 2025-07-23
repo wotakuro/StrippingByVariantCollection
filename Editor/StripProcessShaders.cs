@@ -120,7 +120,7 @@ namespace UTJ.ShaderVariantStripping
 
             if (!StripShaderConfig.IsEnable)
             {
-                shaderVariantStripLogger.LogAllInVariantColllection(shader, snippet, shaderCompilerData);
+                shaderVariantStripLogger.LogAllInVariantColllection(shader, snippet, shaderCompilerData,false);
                 return;
             }
 
@@ -134,7 +134,10 @@ namespace UTJ.ShaderVariantStripping
             }
             shaderVariantStripLogger.ClearStringBuffers();
 
+            bool isExistShader = false;
+
             bool isExistShaderInSVC = this.projectSVCData.IsExistSVC( shader);
+            isExistShader |= isExistShaderInSVC;
 
 #if UNITY_6000_0_OR_NEWER
 
@@ -149,25 +152,21 @@ namespace UTJ.ShaderVariantStripping
                 conditionsForPerShader = new List<ProjectGSCData.GraphcisStateRequestCondition>();
             }
             this.ConstructGSCConditions(conditionsForPerShader, shaderCompilerData);
+
             foreach (var condition in conditionsForPerShader) {
                 bool flag = this.projectGSCData.IsExistInGSC(shader, ref snippet, condition);
                 if (flag)
                 {
                     isExistShaderInGSC = true;
+                    isExistShader |= isExistShaderInGSC;
                     //break;
                 }
-#if DEBUG
-                Debug.Log("Condition " + condition.graphicsDeviceMatch);
-#endif
             }
+
+            Debug.Log("IsExistShader " + shader.name + "::" + isExistShader);
 #endif
 
-#if UNITY_6000_0_OR_NEWER
-            if ( (!isExistShaderInSVC && StripShaderConfig.UseSVC)
-                && !isExistShaderInGSC)
-#else
-            if (!isExistShaderInSVC && StripShaderConfig.UseSVC)
-#endif
+            if(!isExistShader)
             {
                 if (StripShaderConfig.StrictVariantStripping)
                 {
@@ -176,7 +175,7 @@ namespace UTJ.ShaderVariantStripping
                 }
                 else
                 {
-                    shaderVariantStripLogger.LogAllInVariantColllection(shader, snippet, shaderCompilerData);
+                    shaderVariantStripLogger.LogAllInVariantColllection(shader, snippet, shaderCompilerData,true);
                 }
                 return;
             }
@@ -190,26 +189,28 @@ namespace UTJ.ShaderVariantStripping
             this.compileResultBuffer.Clear();
             for (int i = 0; i < shaderCompilerData.Count; ++i)
             {
-                bool isExist = false;
+                bool isExistVariant = false;
 
 
 #if UNITY_6000_0_OR_NEWER
-                if (StripShaderConfig.UseGSC && !isExist)
+                if (StripShaderConfig.UseGSC && !isExistVariant)
                 {
 
                     bool isExistsVariantInGSC = projectGSCData.IsExistVariantInGSC(shader,
                         ref snippet, shaderCompilerData[i] , ref gcsConditionData, variantGSCHashSet);
-                    isExist |= isExistShaderInGSC;
+
+                    Debug.Log("IsExist Variant in GSC::" + isExistsVariantInGSC);
+                    isExistVariant |= isExistsVariantInGSC;
                 }
 #endif
 
                 // use shader variant collection
-                if (StripShaderConfig.UseSVC && !isExist)
+                if (StripShaderConfig.UseSVC && !isExistVariant)
                 {
-                    isExist |= projectSVCData.IsExistInSVC(variantsHashSet, shader, snippet, shaderCompilerData[i], maskGetter);
+                    isExistVariant |= projectSVCData.IsExistInSVC(variantsHashSet, shader, snippet, shaderCompilerData[i], maskGetter);
                 }
                 /// log 
-                if (isExist)
+                if (isExistVariant)
                 {
                     shaderVariantStripLogger.AppendIncludeShaderInfo(shader, snippet, shaderCompilerData[i]);
                     this.compileResultBuffer.Add(shaderCompilerData[i]);
