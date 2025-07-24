@@ -183,7 +183,7 @@ namespace UTJ.ShaderVariantStripping
             var targetInfo = new ShaderVariantsInfo(shader, snippet.passType, compiledKeyword.ToArray());
             if (variantsHashSet == null)
             {
-                Debug.LogError("variantHashSet is null");
+                Debug.LogWarning("variantHashSet is null");
                 return false;
             }
             bool flag = (variantsHashSet.Contains(targetInfo));

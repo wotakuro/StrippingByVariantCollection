@@ -284,6 +284,30 @@ namespace UTJ.ShaderVariantStripping
             return copyData;
         }
 
+#if DEBUG
+
+        internal void LogVariantDataList(string path , HashSet<GraphicsStateVariantData> hashSet)
+        {
+            var sb = new System.Text.StringBuilder(1024 * 1024);
+            foreach(var info in hashSet)
+            {
+                if(info.passIdentifier.SubshaderIndex != 0 || info.passIdentifier.PassIndex != 1)
+                {
+                    continue;
+                }
+                sb.Append(info.shader.name).Append(" :: ").
+                    Append(info.passIdentifier.SubshaderIndex).Append("-").
+                    Append(info.passIdentifier.PassIndex).AppendLine();
+
+                foreach(var keyword in info.keywordsForCheck ){
+                    sb.Append(keyword).Append(" ");
+                }
+                sb.AppendLine();
+            }
+            System.IO.File.WriteAllText(path, sb.ToString());
+        }
+#endif
+
 
         internal bool IsExistVariantInGSC(
             Shader shader, ref ShaderSnippetData snippet, ShaderCompilerData data,

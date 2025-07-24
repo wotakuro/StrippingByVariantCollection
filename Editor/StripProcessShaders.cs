@@ -163,7 +163,6 @@ namespace UTJ.ShaderVariantStripping
                 }
             }
 
-            Debug.Log("IsExistShader " + shader.name + "::" + isExistShader);
 #endif
 
             if(!isExistShader)
@@ -183,6 +182,7 @@ namespace UTJ.ShaderVariantStripping
             var  variantsHashSet = projectSVCData.GetVariantsHashSet(shader,maskGetter);
 #if UNITY_6000_0_OR_NEWER
             var variantGSCHashSet = projectGSCData.GetVariantsHashSet(shader, maskGetter);
+
 #endif
 
             // Set ShaderCompilerData List
@@ -200,7 +200,6 @@ namespace UTJ.ShaderVariantStripping
                     bool isExistsVariantInGSC = projectGSCData.IsExistVariantInGSC(shader,
                         ref snippet, shaderCompilerData[i] , ref gcsConditionData, variantGSCHashSet);
 
-                    Debug.Log("IsExist Variant in GSC::" + isExistsVariantInGSC);
                     isExistVariant |= isExistsVariantInGSC;
                 }
 #endif

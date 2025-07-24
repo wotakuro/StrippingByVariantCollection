@@ -308,7 +308,6 @@ namespace UTJ.ShaderVariantStripping
             {
                 System.IO.Directory.CreateDirectory(dir);
             }
-            Debug.Log(dir + ";;" + name + ":::");
             filePath = System.IO.Path.Combine(dir, name) + ".txt";
         }
 
