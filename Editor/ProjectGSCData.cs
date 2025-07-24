@@ -240,7 +240,7 @@ namespace UTJ.ShaderVariantStripping
 #endif
 
 
-        internal HashSet<GraphicsStateVariantData> GetVariantsHashSet(Shader shader, ShaderKeywordMaskGetterPerSnippet maskGetter)
+        internal HashSet<GraphicsStateVariantData> GetVariantsHashSet(Shader shader,ShaderKeywordMaskGetterPerSnippet maskGetter)
         {
             HashSet<GraphicsStateVariantData> originHashData;
             if (!this.graphicsStatesVariants.TryGetValue(shader, out originHashData))
@@ -253,7 +253,7 @@ namespace UTJ.ShaderVariantStripping
 
 
 
-        private static HashSet<GraphicsStateVariantData> CreateCurrentStageVariantsInfo(HashSet<GraphicsStateVariantData> origin,
+        private static HashSet<GraphicsStateVariantData> CreateCurrentStageVariantsInfo(HashSet<GraphicsStateVariantData> origin, 
             ShaderKeywordMaskGetterPerSnippet maskGetter)
         {
             if (!maskGetter.HasCutoffKeywords())

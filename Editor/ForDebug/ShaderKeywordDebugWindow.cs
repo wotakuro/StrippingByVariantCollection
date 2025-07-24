@@ -40,12 +40,6 @@ namespace UTJ
             //SetupProgramList(getter);
         }
 
-        private void SetupProgramList(ShaderKeywordMaskGetter getter)
-        {
-            var allPass = getter.GetAllPasses();
-
-        }
-
         #region KEYWORD_LIST
         private void SetupKeywordList(ShaderKeywordMaskGetter getter) { 
             var allKeywords = getter.allKeywords;

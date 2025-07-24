@@ -147,7 +147,7 @@ namespace UTJ
         {
             get
             {
-                return ShaderNameUtility.GetShaderShortNameForPath(shader) + ShaderNameUtility.GetSnipetName(snippetData) + ".txt";
+                return ShaderNameUtility.GetShaderNameForPath(shader) + ShaderNameUtility.GetSnipetName(snippetData) + ".txt";
             }
         }
 
