@@ -195,7 +195,8 @@ namespace UTJ.ShaderVariantStripping
 #if UNITY_6000_0_OR_NEWER
                 if (StripShaderConfig.UseGSC && !isExistVariant)
                 {
-
+                    gcsConditionData.buildTarget = shaderCompilerData[i].buildTarget;
+                    gcsConditionData.shaderPlatform = shaderCompilerData[i].shaderCompilerPlatform;
                     bool isExistsVariantInGSC = projectGSCData.IsExistVariantInGSC(shader,
                         ref snippet, shaderCompilerData[i] , ref gcsConditionData, variantGSCHashSet);
 
