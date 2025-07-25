@@ -1,5 +1,3 @@
-#if UNITY_6000_0_OR_NEWER
-
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -13,7 +11,7 @@ namespace UTJ.ShaderVariantStripping
 
     internal class StrippingConfigForUnity6Window : EditorWindow
     {
-        [MenuItem("Tools/UTJ/ShaderStrippingConfigU6")]
+        [MenuItem("Tools/UTJ/ShaderStrippingConfig")]
         public static void Create()
         {
             EditorWindow.GetWindow<StrippingConfigForUnity6Window>();
@@ -23,7 +21,6 @@ namespace UTJ.ShaderVariantStripping
         private Toggle logToggle;
         private Toggle strictModeToggle;
         private Toggle disableUnityStrip;
-        private Toggle ignoreStageOnlyKeyword;
         private IntegerField orderIntField;
 
         // from U6
@@ -60,7 +57,6 @@ namespace UTJ.ShaderVariantStripping
             this.logToggle = this.rootVisualElement.Q<Toggle>("LogEnable");
             this.strictModeToggle = this.rootVisualElement.Q<Toggle>("StrictVariantStripping");
             this.disableUnityStrip = this.rootVisualElement.Q<Toggle>("DisableUnityStrip");
-            this.ignoreStageOnlyKeyword = this.rootVisualElement.Q<Toggle>("IgnoreStgeOnlyKeyword");
 
             this.orderIntField = this.rootVisualElement.Q<IntegerField>("ExecuteOrder");
             this.executeOrderMinBtn = this.rootVisualElement.Q<Button>("ExecOrderMinBtn");
@@ -88,7 +84,6 @@ namespace UTJ.ShaderVariantStripping
             this.logToggle.SetValueWithoutNotify(StripShaderConfig.IsLogEnable);
             this.strictModeToggle.SetValueWithoutNotify(StripShaderConfig.StrictVariantStripping);
             this.disableUnityStrip.SetValueWithoutNotify(StripShaderConfig.DisableUnityStrip);
-            this.ignoreStageOnlyKeyword.SetValueWithoutNotify(StripShaderConfig.IgnoreStageOnlyKeyword);
             this.orderIntField.SetValueWithoutNotify(StripShaderConfig.Order);
             //from U6
             this.useShaderVariantCollection.SetValueWithoutNotify(StripShaderConfig.UseSVC);
@@ -102,7 +97,6 @@ namespace UTJ.ShaderVariantStripping
             this.logToggle.RegisterValueChangedCallback(OnChangeLogEnabbleToggle);
             this.strictModeToggle.RegisterValueChangedCallback(OnChangeStrictModeToggle);
             this.disableUnityStrip.RegisterValueChangedCallback(OnChangeDisableUnityStripToggle);
-            this.ignoreStageOnlyKeyword.RegisterValueChangedCallback(OnChangeIgnoreStageOnlyKeywordToggle);
 
 
             //from U6
@@ -153,10 +147,6 @@ namespace UTJ.ShaderVariantStripping
             StripShaderConfig.DisableUnityStrip = val.newValue;
         }
 
-        private void OnChangeIgnoreStageOnlyKeywordToggle(ChangeEvent<bool> val)
-        {
-            StripShaderConfig.IgnoreStageOnlyKeyword = val.newValue;
-        }
 
         private void OnChangeUseSVC(ChangeEvent<bool> val)
         {
@@ -180,7 +170,6 @@ namespace UTJ.ShaderVariantStripping
         {
             strictModeToggle.SetEnabled(enabled);
             disableUnityStrip.SetEnabled(enabled);
-            ignoreStageOnlyKeyword.SetEnabled(enabled);
             orderIntField.SetEnabled(enabled);
 
             orderIntField.SetEnabled(enabled);
@@ -335,5 +324,3 @@ namespace UTJ.ShaderVariantStripping
         }
     }
 }
-
-#endif

@@ -94,9 +94,9 @@ namespace UTJ.ShaderVariantStripping
             {
                 return;
             }
-            string shaderName = ShaderNameUtility.GetShaderShortNameForPath(shader);
-            string includeDir = LogDirectory + "/" + dateTimeStr + "/Include/" + shaderName;
-            string excludeDir = LogDirectory + "/" + dateTimeStr + "/Exclude/" + shaderName;
+            string shaderName = ShaderNameUtility.GetShaderNameForPath(shader);
+            string includeDir = LogDirectory + "/" + dateTimeStr + "/Include";
+            string excludeDir = LogDirectory + "/" + dateTimeStr + "/Exclude";
             string name = shaderName + ShaderNameUtility.GetSnipetName(snippet);
 
             if (includeVariantsBuffer.Length != 0)
@@ -186,11 +186,7 @@ namespace UTJ.ShaderVariantStripping
             sb.Append(" Keyword:");
             foreach (var keyword in sortKeywords)
             {
-#if UNITY_2021_2_OR_NEWER
                 sb.Append(keyword.name).Append(" ");
-#else
-                sb.Append( ShaderKeyword.GetKeywordName(shader,keyword)).Append(" ");
-#endif
             }
 
 
@@ -198,7 +194,6 @@ namespace UTJ.ShaderVariantStripping
             sb.Append("\n KeywordType:");
             foreach (var keyword in sortKeywords)
             {
-#if UNITY_2022_2_OR_NEWER
                 if (!ShaderKeyword.IsKeywordLocal(keyword))
                 {
                     sb.Append(ShaderKeyword.GetGlobalKeywordType(keyword)).Append(" ");
@@ -208,13 +203,9 @@ namespace UTJ.ShaderVariantStripping
                     var localKeyword = new LocalKeyword(shader, keyword.name);
                     sb.Append(localKeyword.type).Append(" ");
                 }
-#else
-                sb.Append(ShaderKeyword.GetKeywordType(shader, keyword)).Append(" ");
-#endif
             }
 
 
-#if UNITY_2022_2_OR_NEWER
             sb.Append("\n LocalkeywordInfo:");
             foreach (var keyword in sortKeywords)
             {
@@ -243,13 +234,6 @@ namespace UTJ.ShaderVariantStripping
                     }
                 }
             }
-#else
-            sb.Append("\n IsLocalkeyword:");
-            foreach (var keyword in sortKeywords)
-            {
-                sb.Append(ShaderKeyword.IsKeywordLocal(keyword)).Append(" ");
-            }
-#endif
             sb.Append("\n").Append("\n");
         }
 

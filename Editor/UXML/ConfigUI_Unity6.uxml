@@ -24,7 +24,6 @@
         <ui:Tab label="ShaderVariantCollection" name="ShaderVariantCollection">
             <ui:VisualElement style="flex-grow: 1; margin-top: 10px; margin-left: 5px;">
                 <ui:Toggle label="Use ShaderVarinatCollection" name="UseSVC" />
-                <ui:Toggle label="IgnoreStgeOnlyKeyword" name="IgnoreStgeOnlyKeyword" />
                 <ui:Label text="Exculude Stripping Rule" display-tooltip-when-elided="true" name="Label" style="margin-left: 10px;" />
                 <ui:ScrollView style="margin-left: 20px;">
                     <ui:ListView focusable="true" name="ExcludeList" reorderable="true" fixed-item-height="20" />

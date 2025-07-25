@@ -1,7 +1,11 @@
 # StrippingByVariantCollection
 
-プロジェクト内にあるShaderVariantCollectionを探してきて、登録されていないVariantをビルドから除外します。<br />
+プロジェクト内にあるShaderVariantCollection及びGraphicsStateCollectionを探してきて、登録されていないVariantをビルドから除外します。<br />
 メニューの「UTJ/ShaderVariantStrip」の設定ウィンドウを変更することが出来ます。<br />
+
+## Unity 2022までをお使いの場合
+[version 2](https://github.com/wotakuro/StrippingByVariantCollection/tree/version2)をお使いください
+
 
 ## 設定画面について
 ![alt text](Documentation~/ConfigWindow.png)

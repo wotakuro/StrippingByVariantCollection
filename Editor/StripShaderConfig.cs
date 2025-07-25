@@ -5,9 +5,7 @@ using System.Collections.Generic;
 using UnityEditor.Callbacks;
 using UTJ.ShaderVariantStripping.CodeGen;
 
-#if UNITY_6000_0_OR_NEWER
 using UnityEngine.Experimental.Rendering;
-#endif 
 
 namespace UTJ.ShaderVariantStripping
 {
@@ -23,7 +21,6 @@ namespace UTJ.ShaderVariantStripping
             public bool disableUnityStrip;
             public int order;
             public List<string> excludeVariantCollection;
-            public bool ignoreStageOnlyKeyword;
 
             // from Unity6
             // Set the default value to False in consideration of migration.
@@ -63,16 +60,6 @@ namespace UTJ.ShaderVariantStripping
             }
         }
 
-
-        public static bool IgnoreStageOnlyKeyword
-        {
-            get { return currentConfig.ignoreStageOnlyKeyword; }
-            set
-            {
-                currentConfig.ignoreStageOnlyKeyword = value;
-                SaveConfigData();
-            }
-        }
 
 
         public static bool StrictVariantStripping
@@ -143,7 +130,7 @@ namespace UTJ.ShaderVariantStripping
             get { return !currentConfig.disableSVC; }
             set
             {
-                currentConfig.disableSVC = value;
+                currentConfig.disableSVC = !value;
                 SaveConfigData();
             }
         }
@@ -152,7 +139,7 @@ namespace UTJ.ShaderVariantStripping
             get { return !currentConfig.disableGSC; }
             set
             {
-                currentConfig.disableGSC = value;
+                currentConfig.disableGSC = !value;
                 SaveConfigData();
             }
         }
@@ -279,7 +266,6 @@ namespace UTJ.ShaderVariantStripping
             }
         }
 
-        #if UNITY_6000_0_OR_NEWER
 
 
         public static List<GraphicsStateCollection> GetExcludeGSC()
@@ -314,7 +300,6 @@ namespace UTJ.ShaderVariantStripping
                 SaveConfigData();
             }
         }
-        #endif
 
         private static bool IsSameList(List<string> src1, List<string> src2)
         {

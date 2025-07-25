@@ -41,10 +41,8 @@ namespace UTJ.ShaderVariantStripping
         private ShaderVariantStripLogger shaderVariantStripLogger = new ShaderVariantStripLogger();
         private ProjectSVCData projectSVCData = new ProjectSVCData();
 
-#if UNITY_6000_0_OR_NEWER
         private ProjectGSCData projectGSCData = new ProjectGSCData();
         private List<ProjectGSCData.GraphcisStateRequestCondition> conditionsForPerShader;
-#endif
 
 
         public StripProcessShaders()
@@ -66,10 +64,7 @@ namespace UTJ.ShaderVariantStripping
             if (isInitialized) { return; }
             this.compileResultBuffer = new List<ShaderCompilerData>(1024);
             this.projectSVCData.Initialize();
-
-#if UNITY_6000_0_OR_NEWER
             this.projectGSCData.Initialize();
-#endif
 
             if (StripShaderConfig.IsLogEnable)
             {
@@ -90,7 +85,6 @@ namespace UTJ.ShaderVariantStripping
             }
         }
 
-#if UNITY_6000_0_OR_NEWER
         private void ConstructGSCConditions(List<ProjectGSCData.GraphcisStateRequestCondition> list,
             IList<ShaderCompilerData> shaderCompilerData)
         {
@@ -111,8 +105,6 @@ namespace UTJ.ShaderVariantStripping
                 }
             }
         }
-#endif
-
 
         public void OnProcessShader(Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> shaderCompilerData)
         {
@@ -128,7 +120,7 @@ namespace UTJ.ShaderVariantStripping
             int startVariants = shaderCompilerData.Count;
 
             ShaderKeywordMaskGetterPerSnippet maskGetter = new ShaderKeywordMaskGetterPerSnippet(shader, snippet);
-            if (StripShaderConfig.IgnoreStageOnlyKeyword)
+//            if (StripShaderConfig.IgnoreStageOnlyKeyword)
             {
                 maskGetter.ConstructOnlyKeyword();
             }
@@ -139,7 +131,6 @@ namespace UTJ.ShaderVariantStripping
             bool isExistShaderInSVC = this.projectSVCData.IsExistSVC( shader);
             isExistShader |= isExistShaderInSVC;
 
-#if UNITY_6000_0_OR_NEWER
 
             var gcsConditionData = new ProjectGSCData.GraphcisStateRequestCondition()
             {
@@ -163,7 +154,6 @@ namespace UTJ.ShaderVariantStripping
                 }
             }
 
-#endif
 
             if(!isExistShader)
             {
@@ -180,10 +170,7 @@ namespace UTJ.ShaderVariantStripping
             }
 
             var  variantsHashSet = projectSVCData.GetVariantsHashSet(shader,maskGetter);
-#if UNITY_6000_0_OR_NEWER
             var variantGSCHashSet = projectGSCData.GetVariantsHashSet(shader, maskGetter);
-
-#endif
 
             // Set ShaderCompilerData List
             this.compileResultBuffer.Clear();
@@ -192,7 +179,6 @@ namespace UTJ.ShaderVariantStripping
                 bool isExistVariant = false;
 
 
-#if UNITY_6000_0_OR_NEWER
                 if (StripShaderConfig.UseGSC && !isExistVariant)
                 {
                     gcsConditionData.buildTarget = shaderCompilerData[i].buildTarget;
@@ -202,7 +188,6 @@ namespace UTJ.ShaderVariantStripping
 
                     isExistVariant |= isExistsVariantInGSC;
                 }
-#endif
 
                 // use shader variant collection
                 if (StripShaderConfig.UseSVC && !isExistVariant)

@@ -1,8 +1,11 @@
 # StrippingByVariantCollection
 [日本語はコチラ](README.ja.md)
 
-Find the ShaderVariantCollection in the project and exclude unregistered variants from the build.
+Find the ShaderVariantCollection and GraphicsStateCollection in the project and exclude unregistered variants from the build.
 You can change the behaiour in the settings window (  "UTJ/ShaderVariantStrip"  ).
+
+## If you are using Unity 2022 or earlier
+Please use [version 2](https://github.com/wotakuro/StrippingByVariantCollection/tree/version2).
 
 ## about Setting Window
 ![alt text](Documentation~/ConfigWindow.png)

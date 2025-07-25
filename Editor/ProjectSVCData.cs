@@ -43,18 +43,10 @@ namespace UTJ.ShaderVariantStripping
                 keywordsForCheck = new List<string>();
                 foreach (var keywordInfo in keywordInfos)
                 {
-#if UNITY_2022_2_OR_NEWER
                     if (!string.IsNullOrEmpty(keywordInfo.name))
                     {
                         keywordsForCheck.Add(keywordInfo.name);
                     }
-#else
-                    if (!string.IsNullOrEmpty(ShaderKeyword.GetKeywordName(sh, keywordInfo)) &&
-                        ShaderKeyword.GetKeywordType(sh, keywordInfo) != ShaderKeywordType.BuiltinDefault)
-                    {
-                        keywordsForCheck.Add(ShaderKeyword.GetKeywordName(sh, keywordInfo));
-                    }
-#endif
                 }
                 keywordsForCheck.Sort();
             }
@@ -187,7 +179,7 @@ namespace UTJ.ShaderVariantStripping
                 return false;
             }
             bool flag = (variantsHashSet.Contains(targetInfo));
-            if (!flag && StripShaderConfig.IgnoreStageOnlyKeyword)
+            if (!flag )
             {
                 bool isRemoved = RemoveStageOnlyKeyword(compiledKeyword, maskGetter);
                 if (isRemoved)
@@ -228,24 +220,12 @@ namespace UTJ.ShaderVariantStripping
             for (int i = 0; i < keywords.Length; ++i)
             {
 
-#if UNITY_2022_2_OR_NEWER
                 string keywordName = keywords[i].name;
-#else
-                string keywordName = ShaderKeyword.GetKeywordName(shader, keywords[i]);
-#endif
 
-#if UNITY_2022_2_OR_NEWER
                 if (!string.IsNullOrEmpty(keywordName))
                 {
                     converted.Add(keywordName);
                 }
-#else
-                if (!string.IsNullOrEmpty( keywordName ) &&
-                    ShaderKeyword.GetKeywordType(shader,keywords[i]) != ShaderKeywordType.BuiltinDefault)
-                {
-                    converted.Add(keywordName);
-                }
-#endif
             }
             converted.Sort();
             return converted;
