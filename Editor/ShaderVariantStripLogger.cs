@@ -7,6 +7,7 @@ using UnityEditor.Build;
 using UnityEngine.Rendering;
 using System.Text;
 using static UTJ.ShaderVariantStripping.ProjectSVCData;
+using System.Diagnostics;
 
 namespace UTJ.ShaderVariantStripping
 {
@@ -85,6 +86,16 @@ namespace UTJ.ShaderVariantStripping
                 System.IO.Directory.CreateDirectory(dir);
             }
             System.IO.File.WriteAllText(dir + "/ProjectSVCData.txt", debugStr);
+        }
+
+        internal void DumpConfig()
+        {
+            string dir = LogDirectory + "/" + dateTimeStr;
+            if (!System.IO.Directory.Exists(dir))
+            {
+                System.IO.Directory.CreateDirectory(dir);
+            }
+            StripShaderConfig.LogConfigData(dir + "/Config.txt");
         }
 
         internal void SaveResult(Shader shader, ShaderSnippetData snippet)

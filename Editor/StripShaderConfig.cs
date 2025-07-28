@@ -11,13 +11,14 @@ namespace UTJ.ShaderVariantStripping
 {
     internal class StripShaderConfig
     {
-        private const string ConfigFile = "ShaderVariants/v2_config.txt";
+        private const string ConfigFile = "ShaderVariants/v3_config.txt";
 
         [System.Serializable]
         struct ConfigData {
             public bool enabled;
             public bool logEnabled;
             public bool strictVariantStripping;
+            public bool safeMode;
             public bool disableUnityStrip;
             public int order;
             public List<string> excludeVariantCollection;
@@ -123,6 +124,18 @@ namespace UTJ.ShaderVariantStripping
         // from U6
         #region UNITY_6
 
+        public static bool SafeMode
+        {
+            get
+            {
+                return currentConfig.safeMode;
+            }
+            set
+            {
+                currentConfig.safeMode = value;
+                SaveConfigData();
+            }
+        }
 
 
         public static bool UseSVC
@@ -194,8 +207,11 @@ namespace UTJ.ShaderVariantStripping
                     enabled = true,
                     strictVariantStripping = false,
                     disableUnityStrip = false,
+                    disableGSC = false,
+                    disableSVC = false,
                     logEnabled = true,
                     order = int.MinValue,
+                    safeMode = true,
                 };
                 return;
             }
@@ -224,13 +240,25 @@ namespace UTJ.ShaderVariantStripping
 
         private static void SaveConfigData()
         {
+            SaveConfigData(ConfigFile);
+        }
+        internal static void LogConfigData(string path)
+        {
+            if(System.IO.File.Exists(path)){
+                return;
+            }
+            SaveConfigData(path);
+        }
+        private static void SaveConfigData(string path)
+        {
             var str = JsonUtility.ToJson(currentConfig);
-            string dir = Path.GetDirectoryName(ConfigFile);
-            if ( !Directory.Exists(dir))
+            string dir = Path.GetDirectoryName(path);
+            if (!Directory.Exists(dir))
             {
                 Directory.CreateDirectory(dir);
             }
-            File.WriteAllText(ConfigFile, str);
+            File.WriteAllText(path, str);
+
         }
 
         public static List<ShaderVariantCollection> GetExcludeVariantCollectionAsset()

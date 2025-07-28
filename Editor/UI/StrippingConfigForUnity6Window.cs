@@ -30,6 +30,7 @@ namespace UTJ.ShaderVariantStripping
         private Toggle GSCmatchTargetPlatformOnly;
         private Button addExcludeGSCBtn;
         private ListView excludeGSCListView;
+        private Toggle safeMode;
 
 
         private Button executeOrderMinBtn;
@@ -78,7 +79,7 @@ namespace UTJ.ShaderVariantStripping
 
             this.addExcludeGSCBtn = this.rootVisualElement.Q<Button>("AppendExcludeGSCBtn");
             this.excludeGSCListView = this.rootVisualElement.Q<ListView>("ExcludeGSCList");
-
+            this.safeMode = this.rootVisualElement.Q<Toggle>("SafeMode");
 
             this.enableToggle.SetValueWithoutNotify(StripShaderConfig.IsEnable);
             this.logToggle.SetValueWithoutNotify(StripShaderConfig.IsLogEnable);
@@ -90,6 +91,7 @@ namespace UTJ.ShaderVariantStripping
             this.useGraphicsStateCollection.SetValueWithoutNotify(StripShaderConfig.UseGSC);
             this.GSCmatchGraphicsAPIOnly.SetValueWithoutNotify(StripShaderConfig.MatchGSCGraphicsAPI);
             this.GSCmatchTargetPlatformOnly.SetValueWithoutNotify(StripShaderConfig.MatchGSCPlatform);
+            this.safeMode.SetValueWithoutNotify( StripShaderConfig.SafeMode );
 
 
 
@@ -104,6 +106,7 @@ namespace UTJ.ShaderVariantStripping
             this.useGraphicsStateCollection.RegisterValueChangedCallback(OnChangeUseGSC);
             this.GSCmatchGraphicsAPIOnly.RegisterValueChangedCallback(OnChangeGSCMatchGraphicsAPI);
             this.GSCmatchTargetPlatformOnly.RegisterValueChangedCallback(OnChangeGSCMatchPlatform);
+            this.safeMode.RegisterValueChangedCallback(OnChangeSafeMode);
 
 
 
@@ -165,6 +168,10 @@ namespace UTJ.ShaderVariantStripping
             StripShaderConfig.MatchGSCPlatform = val.newValue;
         }
 
+        private void OnChangeSafeMode(ChangeEvent<bool> val)
+        {
+            StripShaderConfig.SafeMode = val.newValue;
+        }
 
         private void SetUIActiveAtEnabled(bool enabled)
         {

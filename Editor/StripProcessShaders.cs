@@ -45,6 +45,11 @@ namespace UTJ.ShaderVariantStripping
         private List<ProjectGSCData.GraphcisStateRequestCondition> conditionsForPerShader;
 
 
+
+
+        private HashSet<ShaderCompilerPlatform> platformsBuffer = new HashSet<ShaderCompilerPlatform>();
+
+
         public StripProcessShaders()
         {
             instance = this;
@@ -70,8 +75,10 @@ namespace UTJ.ShaderVariantStripping
             {
                 shaderVariantStripLogger.InitLogInfo();
                 shaderVariantStripLogger.SaveProjectSVCVaraiants(this.projectSVCData.GetDebugStr() );
+                shaderVariantStripLogger.DumpConfig();
             }
             isInitialized = true;
+            
         }
 
 
@@ -159,8 +166,17 @@ namespace UTJ.ShaderVariantStripping
             {
                 if (StripShaderConfig.StrictVariantStripping)
                 {
-                    shaderVariantStripLogger.LogNotInVariantColllection(shader, snippet, shaderCompilerData);
-                    shaderCompilerData.Clear();
+                    // safe mode
+                    if ( StripShaderConfig.SafeMode )
+                    {
+                        this.ExecuteSafeMode(shader, snippet, shaderCompilerData);
+                        shaderVariantStripLogger.LogResult(shader, snippet, shaderCompilerData, maskGetter, startTime, startVariants);
+                    }
+                    else
+                    {
+                        shaderVariantStripLogger.LogNotInVariantColllection(shader, snippet, shaderCompilerData);
+                        shaderCompilerData.Clear();
+                    }
                 }
                 else
                 {
@@ -207,6 +223,13 @@ namespace UTJ.ShaderVariantStripping
 
             }
 
+            // safe mode
+            if(StripShaderConfig.SafeMode && compileResultBuffer.Count == 0)
+            {
+                this.ExecuteSafeMode(shader, snippet, shaderCompilerData);
+                shaderVariantStripLogger.LogResult(shader, snippet, shaderCompilerData, maskGetter, startTime, startVariants);
+                return;
+            }
 
             // CreateList             
             shaderCompilerData.Clear();
@@ -218,6 +241,35 @@ namespace UTJ.ShaderVariantStripping
             shaderVariantStripLogger.LogResult(shader, snippet, shaderCompilerData, maskGetter, startTime, startVariants);
         }
 
+
+        private void ExecuteSafeMode(Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> shaderCompilerData)
+        {
+            this.platformsBuffer.Clear();
+            this.compileResultBuffer.Clear();
+            shaderVariantStripLogger.ClearStringBuffers();
+
+            foreach (var data in shaderCompilerData)
+            {
+                var platform = data.shaderCompilerPlatform;
+                if (!this.platformsBuffer.Contains(platform))
+                {
+                    shaderVariantStripLogger.AppendIncludeShaderInfo(shader, snippet, data);
+                    compileResultBuffer.Add(data);
+                    this.platformsBuffer.Add(platform);
+                }
+                else
+                {
+                    shaderVariantStripLogger.AppendExcludeShaderInfo(shader, snippet, data);
+                }
+            }
+            shaderCompilerData.Clear();
+
+            foreach (var data in this.compileResultBuffer)
+            {
+                shaderCompilerData.Add(data);
+            }
+
+        }
 
     }
 }
