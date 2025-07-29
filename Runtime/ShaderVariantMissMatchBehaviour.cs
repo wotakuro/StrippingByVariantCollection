@@ -266,19 +266,28 @@ namespace UTJ.ShaderVariantStripping.Runtime
                 {
                     this.missMatchStringBuffer.Clear();
                 }
-                this.missMatchStringBuffer.Append((int)this.currentPlatform).Append(",").Append((int)this.currentGraphicDeviceType).AppendLine();
-                foreach (var error in shaderErrorsBuffer)
-                {
-                    this.missMatchStringBuffer.Append(error.shader).Append(',').
-                        Append(error.realShader).Append(',').
-                        Append(error.subShader).Append(',').
-                        Append(error.pass).Append(',').
-                        Append(error.stage).Append(',').
-                        Append(error.variant).AppendLine();
-                }
+                BuildStringBuilder(missMatchStringBuffer);
                 message = Encoding.UTF8.GetBytes(missMatchStringBuffer.ToString());
             }
             PlayerConnection.instance.Send(SendAllMissMatch,message);
+        }
+
+        private void BuildStringBuilder(StringBuilder sb)
+        {
+            sb.Append((int)this.currentPlatform).Append(",").
+                Append((int)this.currentGraphicDeviceType);
+            sb.Append('\n');
+
+            foreach (var error in this.shaderErrors)
+            {
+                sb.Append(error.shader).Append(',').
+                    Append(error.realShader).Append(',').
+                    Append(error.subShader).Append(',').
+                    Append(error.pass).Append(',').
+                    Append(error.stage).Append(',').
+                    Append(error.variant).Append('\n');
+            }
+
         }
 
         private void OnDestroy()

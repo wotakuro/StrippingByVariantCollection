@@ -210,7 +210,7 @@ namespace UTJ.ShaderVariantStripping
                     disableGSC = false,
                     disableSVC = false,
                     logEnabled = true,
-                    order = int.MinValue,
+                    order = int.MaxValue,
                     safeMode = true,
                 };
                 return;
