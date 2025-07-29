@@ -32,6 +32,9 @@ namespace UTJ.ShaderVariantStripping
         private ListView excludeGSCListView;
         private Toggle safeMode;
 
+        private IMGUIContainer missMatchImgui;
+        private MisssingMatchUI misssingMatchUI = new MisssingMatchUI();
+
 
         private Button executeOrderMinBtn;
         private Button executeOrderMaxBtn;
@@ -80,12 +83,16 @@ namespace UTJ.ShaderVariantStripping
             this.addExcludeGSCBtn = this.rootVisualElement.Q<Button>("AppendExcludeGSCBtn");
             this.excludeGSCListView = this.rootVisualElement.Q<ListView>("ExcludeGSCList");
             this.safeMode = this.rootVisualElement.Q<Toggle>("SafeMode");
+            this.missMatchImgui = this.rootVisualElement.Q<IMGUIContainer>("MissMatchIMGUI");
 
             this.enableToggle.SetValueWithoutNotify(StripShaderConfig.IsEnable);
             this.logToggle.SetValueWithoutNotify(StripShaderConfig.IsLogEnable);
             this.strictModeToggle.SetValueWithoutNotify(StripShaderConfig.StrictVariantStripping);
             this.disableUnityStrip.SetValueWithoutNotify(StripShaderConfig.DisableUnityStrip);
             this.orderIntField.SetValueWithoutNotify(StripShaderConfig.Order);
+
+            misssingMatchUI.OnEnable(this, this.missMatchImgui);
+
             //from U6
             this.useShaderVariantCollection.SetValueWithoutNotify(StripShaderConfig.UseSVC);
             this.useGraphicsStateCollection.SetValueWithoutNotify(StripShaderConfig.UseGSC);
@@ -100,6 +107,7 @@ namespace UTJ.ShaderVariantStripping
             this.strictModeToggle.RegisterValueChangedCallback(OnChangeStrictModeToggle);
             this.disableUnityStrip.RegisterValueChangedCallback(OnChangeDisableUnityStripToggle);
 
+;
 
             //from U6
             this.useShaderVariantCollection.RegisterValueChangedCallback(OnChangeUseSVC);
@@ -328,6 +336,8 @@ namespace UTJ.ShaderVariantStripping
         void OnDisable()
         {
             StripShaderConfig.SetExcludeVariantCollection(this.svcAssets);
+            StripShaderConfig.SetExcludeGSC(this.gscAssets);
+            this.misssingMatchUI.OnDisable(this.missMatchImgui);
         }
     }
 }

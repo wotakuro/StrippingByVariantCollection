@@ -12,24 +12,19 @@ using UnityEngine.UIElements;
 namespace UTJ.ShaderVariantStripping
 {
 
-    public class TestMissMatchWin : EditorWindow
+    public class MisssingMatchUI
     {
-        [MenuItem("Tools/TestMissMatch")]
-        public static void Create()
-        {
-            TestMissMatchWin.GetWindow<TestMissMatchWin>();
-        }
-
         IConnectionState attachProfilerState;
 
-        public void OnEnable()
+        public void OnEnable(EditorWindow window,IMGUIContainer iMGUIContainer)
         {
-
-            attachProfilerState = PlayerConnectionGUIUtility.GetConnectionState(this, OnConnected);
+            attachProfilerState = PlayerConnectionGUIUtility.GetConnectionState(window, OnConnected);
+            iMGUIContainer.onGUIHandler = this.OnGUI;
         }
-        private void OnDisable()
+        public void OnDisable(IMGUIContainer iMGUIContainer)
         {
             attachProfilerState.Dispose();
+            iMGUIContainer.onGUIHandler = null;
         }
 
         private void OnConnected(string player)
@@ -37,7 +32,7 @@ namespace UTJ.ShaderVariantStripping
             Debug.Log(string.Format("MyWindow connected to {0}", player));
         }
 
-        public void OnGUI()
+        private void OnGUI()
         {
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("Target Player",GUILayout.Width(200) );
@@ -60,6 +55,7 @@ namespace UTJ.ShaderVariantStripping
 
         public static CreateGSCFromMissMatchLog Instance { get; private set; } = new CreateGSCFromMissMatchLog();
 
+        public delegate void OnRecieveMissMatchData(string filePath);
 
         private CreateGSCFromMissMatchLog()
         {
