@@ -79,8 +79,16 @@ PlayerSettingsの「Strict shader variant matching 」を有効にしたDevelopm
 ### TargetPlayer
 DevelopmentBuildした対象を指定します。
 
-### GetFrom Connection
-このボタンを押すと、Assets/MissMatchVarint以下にGraphicsStateCollectionを生成します。
+### Create GraphicsStatesCollection from Miss Match Variant
+このボタンを押すと、Assets/GraphicsStateCollection/MissMatchVarint以下にGraphicsStateCollectionを生成します。
+
+### Recieve GraphicsStateCollection from Player
+このボタンを出すには「STRIP_ENABLE_AUTO_GSC」をDefineに追加する必要があります。<br/ >
+ボタンが押されると、接続中のPlayerが起動後からTraceしているGraphicsStateCollectionをEditorに転送します。<br />
+
+![alt text](Documentation~/PlayerSettings.png) <br />
+
+GraphicsStateCollectionは複数のObjectで同時にTraceすることが出来ないため、Defineによるオプションを導入しています。
 
 <br />
 
@@ -97,9 +105,16 @@ https://docs.unity3d.com/6000.0/Documentation/Manual/incremental-build-pipeline.
 
 ![alt text](Documentation~/CleanBuild.png) <br />
 
-## ワークフローの提唱
-GraphicsStateCollectionを構築して、より良いStripをするための提唱です。
 
-1.
-2.
-3.
+## ワークフローの提唱
+GraphicsStateCollectionを構築して、より良いStripをするための提唱です。<br />
+
+<pre>
+1.まず本ツールでのStripを無効化、「STRIP_ENABLE_AUTO_GSC」をDefineしたDevelopmentビルドを作成します
+2.しばらく動かした後、PlayerからGraphicsStateCollectionを取得します。
+3.その後、PlayerSettings.strictShaderVariantMatchingを有効、本ツールを有効化、Common設定のStrictVariantStrippingとSafeModeを有効にしてDevelopmentBuildをします。
+4.ShaderVariantのミスマッチを「Create GraphicsStatesCollection from Miss Match Variant」で収集します。
+
+このような形で、GraphicsStateCollectionを収集して構築していく事がお勧めです。
+最終的なビルドは安全性を考慮して、本ツールのSafeModeを有効化してビルドしていく事です。
+</pre>

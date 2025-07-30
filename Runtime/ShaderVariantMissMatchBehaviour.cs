@@ -292,6 +292,7 @@ namespace UTJ.ShaderVariantStripping.Runtime
 #if STRIP_ENABLE_AUTO_GSC
         private void OnRecieveSendGCSRequest(MessageEventArgs args)
         {
+
             System.Text.StringBuilder sb = new StringBuilder(128);
             var dateTime = System.DateTime.Now;
 

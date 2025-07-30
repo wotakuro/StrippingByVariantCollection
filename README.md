@@ -79,9 +79,42 @@ This option collects mismatched ShaderVariants from DevelopmentBuild with “Str
 ### TargetPlayer
 Connect to the target for DevelopmentBuild.
 
-### GetFrom Connection
-Press this button to generate GraphicsStateCollection under Assets/MissMatchVarint.
+### Create GraphicsStatesCollection from Miss Match Variant
+Press this button to generate GraphicsStateCollection under Assets/GraphicsStateCollection/MissMatchVarint.
 <br />
 
+### Recieve GraphicsStateCollection from Player
+To display this button, you need to add “STRIP_ENABLE_AUTO_GSC” to Define. <br/ >
+When the button is pressed, the GraphicsStateCollection that has been traced since the connected Player started up is transferred to the Editor. <br />
+
+![alt text](Documentation~/PlayerSettings.png) <br />
+GraphicsStateCollection cannot trace multiple objects simultaneously, so we have introduced options using Define.
+
+
 # Reference：<br />
-https://unity.com/blog/engine-platform/stripping-scriptable-shader-variants
+
+## About Strip Processing
+This uses the removal of scriptable shader variants. <br />
+https://blogs.unity3d.com/jp/2018/05/14/stripping-scriptable-shader-variants/
+
+## When Strip Processing Is Not Performed
+In incremental builds, IPreprocessShaders.OnPorocessShader may not be called. <br />
+https://docs.unity3d.com/6000.0/Documentation/Manual/incremental-build-pipeline.html <br />
+<br />
+If this occurs, please try CleanBuild.
+
+![alt text](Documentation~/CleanBuild.png) <br />
+
+
+## Proposed workflow
+This is a proposal for building a GraphicsStateCollection to improve strip processing. <br />
+
+<pre>
+1. First, disable Strip in this tool, create a Development build with “STRIP_ENABLE_AUTO_GSC” defined.
+2. After running for a while, retrieve the GraphicsStateCollection from the Player.
+3. Then, enable PlayerSettings.strictShaderVariantMatching, enable this tool, enable StrictVariantStripping and SafeMode in Common settings, and create a Development Build.
+4. Collect Shader Variant mismatches using “Create GraphicsStatesCollection from Miss Match Variant.”
+
+We recommend collecting and building the GraphicsStateCollection in this manner.
+For the final build, enable SafeMode in this tool for safety considerations.
+</pre>

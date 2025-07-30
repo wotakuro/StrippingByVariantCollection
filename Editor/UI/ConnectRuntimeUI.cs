@@ -49,6 +49,12 @@ namespace UTJ.ShaderVariantStripping
             EditorGUILayout.LabelField("Auto GraphicsStateCollection");
             if(GUILayout.Button("Recieve GraphicsStateCollection from Player"))
             {
+
+                string dir = "Assets/GraphicsStateCollection/Runtime/";
+                if (!System.IO.Directory.Exists(dir))
+                {
+                    System.IO.Directory.CreateDirectory(dir);
+                }
                 EditorConnection.instance.Send(CreateGSCFromMissMatchLog.RequestSendGCS, CreateGSCFromMissMatchLog.dummySendData);
             }
 #endif
