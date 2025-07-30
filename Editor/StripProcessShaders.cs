@@ -122,15 +122,15 @@ namespace UTJ.ShaderVariantStripping
                 shaderVariantStripLogger.LogAllInVariantColllection(shader, snippet, shaderCompilerData,false);
                 return;
             }
+            this.platformsBuffer.Clear();
 
             double startTime = EditorApplication.timeSinceStartup;
             int startVariants = shaderCompilerData.Count;
 
             ShaderKeywordMaskGetterPerSnippet maskGetter = new ShaderKeywordMaskGetterPerSnippet(shader, snippet);
-//            if (StripShaderConfig.IgnoreStageOnlyKeyword)
-            {
-                maskGetter.ConstructOnlyKeyword();
-            }
+            maskGetter.ConstructOnlyKeyword();
+
+
             shaderVariantStripLogger.ClearStringBuffers();
 
             bool isExistShader = false;
@@ -194,7 +194,17 @@ namespace UTJ.ShaderVariantStripping
             {
                 bool isExistVariant = false;
 
-
+                if (StripShaderConfig.SafeMode)
+                {
+                    var platform = shaderCompilerData[i].shaderCompilerPlatform;
+                    if (!this.platformsBuffer.Contains(platform))
+                    {
+                        this.platformsBuffer.Add(platform);
+                        isExistVariant = true;
+                    }
+                }
+                
+                
                 if (StripShaderConfig.UseGSC && !isExistVariant)
                 {
                     gcsConditionData.buildTarget = shaderCompilerData[i].buildTarget;
@@ -221,14 +231,6 @@ namespace UTJ.ShaderVariantStripping
                     shaderVariantStripLogger.AppendExcludeShaderInfo(shader, snippet, shaderCompilerData[i]);
                 }
 
-            }
-
-            // safe mode
-            if(StripShaderConfig.SafeMode && compileResultBuffer.Count == 0)
-            {
-                this.ExecuteSafeMode(shader, snippet, shaderCompilerData);
-                shaderVariantStripLogger.LogResult(shader, snippet, shaderCompilerData, maskGetter, startTime, startVariants);
-                return;
             }
 
             // CreateList             

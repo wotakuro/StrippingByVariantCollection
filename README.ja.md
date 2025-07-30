@@ -72,8 +72,8 @@ Shaderのキーワードが、どのStageで有効になっているかデバッ
 ### Exclude Stripping Rule
 ここで指定されたGraphicsStateCollectionアセットは対象外となり、無視します。
 
-## Miss MathVariantタブ
-![alt text](Documentation~/Config_Strip_Missmatch.png) <br />
+## Connect Runtimeタブ
+![alt text](Documentation~/Config_Strip_ConnectRuntime.png) <br />
 PlayerSettingsの「Strict shader variant matching 」を有効にしたDevelopmentBuildから、ミスマッチが起きたShaderVariantを収集して、ダミーのGraphicsStateCollectionを作るためのオプションです。
 
 ### TargetPlayer
@@ -88,3 +88,18 @@ DevelopmentBuildした対象を指定します。
 ## Strip処理について
 こちらはスクリプタブルシェーダーバリアントの除去を使っています<br />
 https://blogs.unity3d.com/jp/2018/05/14/stripping-scriptable-shader-variants/
+
+## Strip処理が行われない場合
+Incrementalビルドによって、IPreprocessShaders.OnPorocessShaderが呼び出されないことがあります。<br />
+https://docs.unity3d.com/6000.0/Documentation/Manual/incremental-build-pipeline.html <br />
+<br />
+もしそのような場合はCleanBuildをお試しください
+
+![alt text](Documentation~/CleanBuild.png) <br />
+
+## ワークフローの提唱
+GraphicsStateCollectionを構築して、より良いStripをするための提唱です。
+
+1.
+2.
+3.

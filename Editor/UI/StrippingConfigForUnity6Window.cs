@@ -32,8 +32,8 @@ namespace UTJ.ShaderVariantStripping
         private ListView excludeGSCListView;
         private Toggle safeMode;
 
-        private IMGUIContainer missMatchImgui;
-        private MisssingMatchUI misssingMatchUI = new MisssingMatchUI();
+        private IMGUIContainer connectRuntimeImgui;
+        private ConnectRuntimeUI connectRuntimeUI = new ConnectRuntimeUI();
 
 
         private Button executeOrderMinBtn;
@@ -83,7 +83,7 @@ namespace UTJ.ShaderVariantStripping
             this.addExcludeGSCBtn = this.rootVisualElement.Q<Button>("AppendExcludeGSCBtn");
             this.excludeGSCListView = this.rootVisualElement.Q<ListView>("ExcludeGSCList");
             this.safeMode = this.rootVisualElement.Q<Toggle>("SafeMode");
-            this.missMatchImgui = this.rootVisualElement.Q<IMGUIContainer>("MissMatchIMGUI");
+            this.connectRuntimeImgui = this.rootVisualElement.Q<IMGUIContainer>("ConnectRuntimeImgui");
 
             this.enableToggle.SetValueWithoutNotify(StripShaderConfig.IsEnable);
             this.logToggle.SetValueWithoutNotify(StripShaderConfig.IsLogEnable);
@@ -91,7 +91,7 @@ namespace UTJ.ShaderVariantStripping
             this.disableUnityStrip.SetValueWithoutNotify(StripShaderConfig.DisableUnityStrip);
             this.orderIntField.SetValueWithoutNotify(StripShaderConfig.Order);
 
-            misssingMatchUI.OnEnable(this, this.missMatchImgui);
+            connectRuntimeUI.OnEnable(this, this.connectRuntimeImgui);
 
             //from U6
             this.useShaderVariantCollection.SetValueWithoutNotify(StripShaderConfig.UseSVC);
@@ -337,7 +337,7 @@ namespace UTJ.ShaderVariantStripping
         {
             StripShaderConfig.SetExcludeVariantCollection(this.svcAssets);
             StripShaderConfig.SetExcludeGSC(this.gscAssets);
-            this.misssingMatchUI.OnDisable(this.missMatchImgui);
+            this.connectRuntimeUI.OnDisable(this.connectRuntimeImgui);
         }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Runtime.Remoting.Messaging;
 using UnityEditor;
@@ -12,10 +13,9 @@ using UnityEngine.UIElements;
 namespace UTJ.ShaderVariantStripping
 {
 
-    public class MisssingMatchUI
+    public class ConnectRuntimeUI
     {
         IConnectionState attachProfilerState;
-
         public void OnEnable(EditorWindow window,IMGUIContainer iMGUIContainer)
         {
             attachProfilerState = PlayerConnectionGUIUtility.GetConnectionState(window, OnConnected);
@@ -39,10 +39,20 @@ namespace UTJ.ShaderVariantStripping
             PlayerConnectionGUILayout.ConnectionTargetSelectionDropdown(attachProfilerState);
 
             EditorGUILayout.EndHorizontal();
-            if ( GUILayout.Button("Get FromConnection"))
+            if ( GUILayout.Button("Create GraphicsStateCollection from Miss Match Variant"))
             {
                 CreateGSCFromMissMatchLog.Instance.SendRequest();
             }
+#if STRIP_ENABLE_AUTO_GSC
+
+            EditorGUILayout.LabelField("");
+            EditorGUILayout.LabelField("Auto GraphicsStateCollection");
+            if(GUILayout.Button("Recieve GraphicsStateCollection from Player"))
+            {
+                EditorConnection.instance.Send(CreateGSCFromMissMatchLog.RequestSendGCS, CreateGSCFromMissMatchLog.dummySendData);
+            }
+#endif
+
         }
     }
 
@@ -50,6 +60,10 @@ namespace UTJ.ShaderVariantStripping
     {
         public static readonly System.Guid RequestSendAllMissMatch = new System.Guid("88AD4F8F-7C5E-410F-8EED-FF569CCA7C65");
         public static readonly System.Guid SendAllMissMatch = new System.Guid("88AD4F8F-7C5E-410F-8EED-FF569CCA7C66");
+
+#if STRIP_ENABLE_AUTO_GSC
+        public static readonly System.Guid RequestSendGCS = new System.Guid("88AD4F8F-7C5E-410F-8EED-FF569CCA7C67");
+#endif
 
         public static readonly byte[] dummySendData = new byte[0];
 
@@ -75,9 +89,22 @@ namespace UTJ.ShaderVariantStripping
         private static void OnRecieveAllMissMatch(MessageEventArgs messageEventArgs)
         {
             var str = System.Text.UTF8Encoding.UTF8.GetString( messageEventArgs.data );
-            System.IO.File.WriteAllText("test.txt", str);
             ExecuteRecivedString(str);
+            CreateMissMatchLog(str);
         }
+
+        private static void CreateMissMatchLog(string str)
+        {
+            var time = DateTime.Now;
+            string dir = "ShaderVariants/MissMatch";
+            if (!System.IO.Directory.Exists(dir))
+            {
+                System.IO.Directory.CreateDirectory(dir);
+            }
+            string path = dir + "/" + time.ToString("yyyyMMdd_HHmmss") + ".log";
+            System.IO.File.WriteAllText(path, str);
+        }
+
 
         public static void ExecuteRecivedString(string str)
         {
@@ -157,7 +184,7 @@ namespace UTJ.ShaderVariantStripping
 
         private static string GetGSCPathName(RuntimePlatform platform,GraphicsDeviceType type)
         {
-            const string dir = "Assets/MissingVariant";
+            const string dir = "Assets/GraphicsStateCollection/MissingVariant";
             if (!System.IO.Directory.Exists(dir))
             {
                 System.IO.Directory.CreateDirectory(dir);

@@ -72,8 +72,8 @@ Only consider GraphicsStateCollection created on the same platform as the build 
 ### Exclude Stripping Rule
 The GraphicsStateCollection assets specified here will be excluded and ignored.
 
-## Miss MathVariant Tab
-![alt text](Documentation~/Config_Strip_Missmatch.png) <br />
+## Connect Runtime  Tab
+![alt text](Documentation~/Config_Strip_ConnectRuntime.png) <br />
 This option collects mismatched ShaderVariants from DevelopmentBuild with “Strict shader variant matching” enabled in PlayerSettings and creates a dummy GraphicsStateCollection.
 
 ### TargetPlayer
@@ -84,4 +84,4 @@ Press this button to generate GraphicsStateCollection under Assets/MissMatchVari
 <br />
 
 # Reference：<br />
-https://blogs.unity3d.com/jp/2018/05/14/stripping-scriptable-shader-variants/
+https://unity.com/blog/engine-platform/stripping-scriptable-shader-variants

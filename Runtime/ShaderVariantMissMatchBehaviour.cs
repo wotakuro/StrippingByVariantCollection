@@ -1,4 +1,4 @@
-#if DEVELOPMENT_BUILD || UNITY_EDITOR
+#if (DEVELOPMENT_BUILD && !STRIP_DIABLE_AUTO_GCS_COLLECTION || true)
 /**
 MIT License
 
@@ -26,6 +26,7 @@ SOFTWARE.
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Networking.PlayerConnection;
 using UnityEngine.Rendering;
 using PlayerConnection = UnityEngine.Networking.PlayerConnection.PlayerConnection;
@@ -39,6 +40,11 @@ namespace UTJ.ShaderVariantStripping.Runtime
 
         public static readonly System.Guid RequestSendAllMissMatch = new System.Guid("88AD4F8F-7C5E-410F-8EED-FF569CCA7C65");
         public static readonly System.Guid SendAllMissMatch = new System.Guid("88AD4F8F-7C5E-410F-8EED-FF569CCA7C66");
+
+
+#if STRIP_ENABLE_AUTO_GSC
+        public static readonly System.Guid RequestSendGCS = new System.Guid("88AD4F8F-7C5E-410F-8EED-FF569CCA7C67");
+#endif
 
         public struct ShaderNotFoundError : IComparer<ShaderNotFoundError>
         {
@@ -229,6 +235,10 @@ namespace UTJ.ShaderVariantStripping.Runtime
         private GraphicsDeviceType currentGraphicDeviceType;
         private RuntimePlatform currentPlatform;
 
+#if STRIP_ENABLE_AUTO_GSC
+        private GraphicsStateCollection graphicsStateCollection;
+#endif
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void Create()
         {
@@ -247,6 +257,12 @@ namespace UTJ.ShaderVariantStripping.Runtime
             instance = this;
             this.currentGraphicDeviceType = SystemInfo.graphicsDeviceType;
             this.currentPlatform = Application.platform;
+
+#if STRIP_ENABLE_AUTO_GSC
+            this.graphicsStateCollection = new GraphicsStateCollection();
+            this.graphicsStateCollection.BeginTrace();
+            PlayerConnection.instance.Register(RequestSendGCS, OnRecieveSendGCSRequest);
+#endif
 
             Application.logMessageReceivedThreaded += OnHandleLog;
             PlayerConnection.instance.Register(RequestSendAllMissMatch, OnRecieveSendAllMissMatchRequest);
@@ -271,6 +287,28 @@ namespace UTJ.ShaderVariantStripping.Runtime
             }
             PlayerConnection.instance.Send(SendAllMissMatch,message);
         }
+
+
+#if STRIP_ENABLE_AUTO_GSC
+        private void OnRecieveSendGCSRequest(MessageEventArgs args)
+        {
+            System.Text.StringBuilder sb = new StringBuilder(128);
+            var dateTime = System.DateTime.Now;
+
+            sb.Append("GraphicsStateCollection/Runtime/").
+                AppendFormat("{0:D4}{1:D2}{2:D2}",dateTime.Year,dateTime.Month,dateTime.Day).Append("-").
+                AppendFormat("{0:D2}{1:D2}{2:D2}", dateTime.Hour, dateTime.Minute, dateTime.Second).
+                Append("-").Append(currentPlatform).Append("-").Append(this.currentGraphicDeviceType);
+
+
+            this.graphicsStateCollection.EndTrace();
+
+            this.graphicsStateCollection.SendToEditor(sb.ToString());
+
+            this.graphicsStateCollection.BeginTrace();
+        }
+#endif
+
 
         private void BuildStringBuilder(StringBuilder sb)
         {
