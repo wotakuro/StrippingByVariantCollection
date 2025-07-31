@@ -178,7 +178,7 @@ namespace UTJ
         {
             if(validKeywords == null)
             {
-                return true;
+                return false;
             }
             return validKeywords.Contains(keyword);
         }
@@ -186,7 +186,7 @@ namespace UTJ
         {
             if (this.pgTypeOnlyKeyword == null)
             {
-                return true;
+                return false;
             }
             return pgTypeOnlyKeyword.Contains(keyword);
         }

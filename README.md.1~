@@ -116,7 +116,5 @@ This is a proposal for building a GraphicsStateCollection to improve strip proce
 4. Collect Shader Variant mismatches using “Create GraphicsStatesCollection from Miss Match Variant.”
 
 I recommend collecting and building the GraphicsStateCollection in this manner.
-For the final build, enable SafeMode/StrictVarinatStripping in this tool and disable "PlayerSettings.StrictVariantStripping" for safety considerations.
-
-※Enabling StrictVarinatStripping reduces the memory usage of unused shaders, such as fallback shaders.
+For the final build, enable SafeMode in this tool and disable "PlayerSettings.StrictVariantStripping" for safety considerations.
 </pre>

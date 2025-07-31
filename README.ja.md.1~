@@ -116,7 +116,5 @@ GraphicsStateCollectionを構築して、より良いStripをするための提�
 4.ShaderVariantのミスマッチを「Create GraphicsStatesCollection from Miss Match Variant」で収集します。
 
 このような形で、GraphicsStateCollectionを収集して構築していく事がお勧めです。
-最終的なビルドは安全性を考慮して、本ツールのSafeMode,StrictVarinatStrippingを有効化して、PlayerSettings.StrictVariantStrippingを無効化してビルドしていく事です。
-
-※StrictVarinatStrippingを有効にすることで、Fallback先のシェーダーなど実際に使われていないShaderのメモリ使用量を削減することが出来ます。
+最終的なビルドは安全性を考慮して、本ツールのSafeModeを有効化して、PlayerSettings.StrictVariantStrippingを無効化してビルドしていく事です。
 </pre>
