@@ -3,7 +3,6 @@ using UnityEditor;
 using System.IO;
 using System.Collections.Generic;
 using UnityEditor.Callbacks;
-using UTJ.ShaderVariantStripping.CodeGen;
 
 using UnityEngine.Experimental.Rendering;
 
@@ -19,7 +18,6 @@ namespace UTJ.ShaderVariantStripping
             public bool logEnabled;
             public bool strictVariantStripping;
             public bool safeMode;
-            public bool disableUnityStrip;
             public int order;
             public List<string> excludeVariantCollection;
 
@@ -42,14 +40,9 @@ namespace UTJ.ShaderVariantStripping
             get { return currentConfig.enabled; }
             set
             {
-                var backupFlag = ShouldRemoveOther;
                 currentConfig.enabled = value;
                 SaveConfigData();
 
-                if( backupFlag != ShouldRemoveOther)
-                {
-                    ReloadCode();
-                }
             }
         }
         public static bool IsLogEnable
@@ -68,58 +61,12 @@ namespace UTJ.ShaderVariantStripping
             get { return currentConfig.strictVariantStripping; }
             set
             {
-                var backupFlag = ShouldRemoveOther;
 
                 currentConfig.strictVariantStripping = value;
-                if (!value)
-                {
-                    DisableUnityStrip = false;
-                }
                 SaveConfigData();
-                if (backupFlag != ShouldRemoveOther)
-                {
-                    ReloadCode();
-                }
             }
         }
 
-        public static int Order
-        {
-            get
-            {
-                return currentConfig.order;
-            }
-            set
-            {
-                currentConfig.order = value;
-                SaveConfigData();
-            }
-        }
-        public static bool DisableUnityStrip
-        {
-            get
-            {
-                return currentConfig.disableUnityStrip;
-            }
-            set
-            {
-                var backupFlag = ShouldRemoveOther;
-                currentConfig.disableUnityStrip = value;
-                SaveConfigData();
-                if (backupFlag != ShouldRemoveOther)
-                {
-                    ReloadCode();
-                }
-            }
-        }
-
-        private static bool ShouldRemoveOther
-        {
-            get
-            {
-                return currentConfig.enabled & currentConfig.strictVariantStripping & currentConfig.disableUnityStrip;
-            }
-        }
 
         // from U6
         #region UNITY_6
@@ -178,24 +125,6 @@ namespace UTJ.ShaderVariantStripping
         #endregion UNITY_6
 
 
-        private static void ReloadCode()
-        {
-            var targets = RecompileAsmUtility.GetRecompileTarget(true);
-
-            if (targets.Count <= 0)
-            {
-                return;
-            }
-
-            var target = targets[0];            
-            targets.RemoveAt(0);
-            if(targets.Count > 0)
-            {
-                RecompileAsmUtility.WriteFile(RecompileAsmUtility.TempCompileTargetFile, targets);
-            }
-            Debug.Log("Recompiling::" + target.asmName);
-            AssetDatabase.ImportAsset( target.asmDefPath , ImportAssetOptions.ForceUpdate);            
-        }
 
         [InitializeOnLoadMethod]
         public static void Init()
@@ -206,7 +135,6 @@ namespace UTJ.ShaderVariantStripping
                 {
                     enabled = true,
                     strictVariantStripping = false,
-                    disableUnityStrip = false,
                     disableGSC = false,
                     disableSVC = false,
                     logEnabled = true,
@@ -216,19 +144,6 @@ namespace UTJ.ShaderVariantStripping
                 return;
             }
             currentConfig = ReadConfigData();
-            EditorApplication.delayCall += () =>
-            {
-                var targets = RecompileAsmUtility.ReadFromFile(RecompileAsmUtility.TempCompileTargetFile);
-                if (targets.Count <= 0)
-                {
-                    return;
-                }
-                var target = targets[0];
-                targets.RemoveAt(0);
-                RecompileAsmUtility.WriteFile(RecompileAsmUtility.TempCompileTargetFile, targets); 
-                Debug.Log("Recompiling::" + target.asmName);
-                AssetDatabase.ImportAsset(target.asmDefPath, ImportAssetOptions.ForceUpdate);
-            };
         }
 
         private static ConfigData ReadConfigData()

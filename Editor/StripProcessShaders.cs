@@ -87,7 +87,7 @@ namespace UTJ.ShaderVariantStripping
         {
             get
             {
-                return StripShaderConfig.Order;
+                return int.MaxValue;
             }
         }
 

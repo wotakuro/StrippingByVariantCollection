@@ -22,41 +22,7 @@ namespace UTJ.ShaderVariantStripping
         private StringBuilder includeVariantsBuffer;
         private StringBuilder excludeVariantsBuffer;
 
-        private struct ShaderInfoData
-        {
-            public Shader shader;
-            public ShaderSnippetData snippetData;
 
-            public ShaderInfoData(Shader sh, ShaderSnippetData data)
-            {
-                this.shader = sh;
-                this.snippetData = data;
-            }
-            public override int GetHashCode()
-            {
-                return this.shader.name.GetHashCode() + this.snippetData.passName.GetHashCode() +
-                    this.snippetData.passType.GetHashCode() + this.snippetData.shaderType.GetHashCode();
-            }
-
-            public override bool Equals(object obj)
-            {
-                ShaderInfoData data = (ShaderInfoData)obj;
-                if (data.shader != this.shader)
-                {
-                    return false;
-                }
-                if (this.snippetData.passName == data.snippetData.passName &&
-                   this.snippetData.passType == data.snippetData.passType &&
-                   this.snippetData.shaderType == data.snippetData.shaderType)
-                {
-                    return true;
-                }
-
-                return false;
-            }
-        }
-
-        private HashSet<ShaderInfoData> alreadyWriteShader = new HashSet<ShaderInfoData>();
         
         internal void InitLogInfo()
         {
@@ -67,7 +33,6 @@ namespace UTJ.ShaderVariantStripping
             }
             var dateTime = System.DateTime.Now;
             this.dateTimeStr = dateTime.ToString("yyyyMMdd_HHmmss");
-            this.alreadyWriteShader.Clear();
 
             // string builder
             this.includeVariantsBuffer = new StringBuilder(1024);
@@ -319,9 +284,14 @@ namespace UTJ.ShaderVariantStripping
             int endVariants = shaderCompilerData.Count;
 
             string dir = LogDirectory + "/" + dateTimeStr;
+            string executeLog = dir + "/ExecuteLog";
             if (!System.IO.Directory.Exists(dir))
             {
                 System.IO.Directory.CreateDirectory(dir);
+            }
+            if (!System.IO.Directory.Exists(executeLog))
+            {
+                System.IO.Directory.CreateDirectory(executeLog);
             }
             var tmpSb = new StringBuilder();
             tmpSb.Append("Info:").Append(snippet.shaderType).Append(" pass").
@@ -330,16 +300,12 @@ namespace UTJ.ShaderVariantStripping
             tmpSb.Append("ExecuteTime:").Append(endTime - startTime).Append(" sec\n").
                 Append("Variants:").Append(startVariants).Append("->").Append(endVariants).Append("\n");
 
-            System.IO.File.AppendAllText(dir + "/" + ShaderNameUtility.GetShaderShortNameForPath(shader) + "_execute.log",
+            System.IO.File.AppendAllText(executeLog +"/"+ ShaderNameUtility.GetShaderNameForPath(shader) + ".log",
                 tmpSb.ToString());
 
-            var data = new ShaderInfoData(shader, snippet);
-            if (!alreadyWriteShader.Contains(data))
-            {
-                SaveResult(shader, snippet);
-                LogKeywordMask(maskGetter);
-                alreadyWriteShader.Add(data);
-            }
+            SaveResult(shader, snippet);
+            LogKeywordMask(maskGetter);
+
 
         }
 

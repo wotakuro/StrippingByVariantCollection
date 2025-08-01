@@ -20,8 +20,7 @@ namespace UTJ.ShaderVariantStripping
         private Toggle enableToggle;
         private Toggle logToggle;
         private Toggle strictModeToggle;
-        private Toggle disableUnityStrip;
-        private IntegerField orderIntField;
+
 
         // from U6
         private Toggle useShaderVariantCollection;
@@ -36,8 +35,6 @@ namespace UTJ.ShaderVariantStripping
         private ConnectRuntimeUI connectRuntimeUI = new ConnectRuntimeUI();
 
 
-        private Button executeOrderMinBtn;
-        private Button executeOrderMaxBtn;
 
         private Button resetTimestampBtn;
 
@@ -60,11 +57,6 @@ namespace UTJ.ShaderVariantStripping
             this.enableToggle = this.rootVisualElement.Q<Toggle>("Enabled");
             this.logToggle = this.rootVisualElement.Q<Toggle>("LogEnable");
             this.strictModeToggle = this.rootVisualElement.Q<Toggle>("StrictVariantStripping");
-            this.disableUnityStrip = this.rootVisualElement.Q<Toggle>("DisableUnityStrip");
-
-            this.orderIntField = this.rootVisualElement.Q<IntegerField>("ExecuteOrder");
-            this.executeOrderMinBtn = this.rootVisualElement.Q<Button>("ExecOrderMinBtn");
-            this.executeOrderMaxBtn = this.rootVisualElement.Q<Button>("ExecOrderMaxBtn");
 
             this.resetTimestampBtn = this.rootVisualElement.Q<Button>("ResetTimestampBtn");
 
@@ -88,8 +80,6 @@ namespace UTJ.ShaderVariantStripping
             this.enableToggle.SetValueWithoutNotify(StripShaderConfig.IsEnable);
             this.logToggle.SetValueWithoutNotify(StripShaderConfig.IsLogEnable);
             this.strictModeToggle.SetValueWithoutNotify(StripShaderConfig.StrictVariantStripping);
-            this.disableUnityStrip.SetValueWithoutNotify(StripShaderConfig.DisableUnityStrip);
-            this.orderIntField.SetValueWithoutNotify(StripShaderConfig.Order);
 
             connectRuntimeUI.OnEnable(this, this.connectRuntimeImgui);
 
@@ -105,7 +95,6 @@ namespace UTJ.ShaderVariantStripping
             this.enableToggle.RegisterValueChangedCallback(OnChangeEnabbleToggle);
             this.logToggle.RegisterValueChangedCallback(OnChangeLogEnabbleToggle);
             this.strictModeToggle.RegisterValueChangedCallback(OnChangeStrictModeToggle);
-            this.disableUnityStrip.RegisterValueChangedCallback(OnChangeDisableUnityStripToggle);
 
 ;
 
@@ -123,14 +112,9 @@ namespace UTJ.ShaderVariantStripping
             this.debugListViewBtn.clicked += OnClickDebugListViewBtn;
             this.debugShaderKeywordBtn.clicked += OnClickShaderKeywordDebugBtn;
 
-            this.orderIntField.RegisterCallback<FocusOutEvent>(OnLostFocusIntField);
-            this.executeOrderMinBtn.clicked += OnClickMinButton;
-            this.executeOrderMaxBtn.clicked += OnClickMaxButton;
             this.addExcludeSVCBtn.clicked += OnClickAddExcludeSVC;
             this.addExcludeGSCBtn.clicked += OnClickAddExcludeGSC;
 
-            SetUIActiveAtEnabled(enableToggle.value);
-            SetUIActiveAtStrictMode(strictModeToggle.value);
 
             SetupExcludeSVCRules();
             this.SetupExcludeGSCRules();
@@ -142,7 +126,6 @@ namespace UTJ.ShaderVariantStripping
         private void OnChangeEnabbleToggle(ChangeEvent<bool> val)
         {
             StripShaderConfig.IsEnable = val.newValue;
-            SetUIActiveAtEnabled(val.newValue);
         }
         private void OnChangeLogEnabbleToggle(ChangeEvent<bool> val)
         {
@@ -151,12 +134,8 @@ namespace UTJ.ShaderVariantStripping
         private void OnChangeStrictModeToggle(ChangeEvent<bool> val)
         {
             StripShaderConfig.StrictVariantStripping = val.newValue;
-            SetUIActiveAtStrictMode(val.newValue);
         }
-        private void OnChangeDisableUnityStripToggle(ChangeEvent<bool> val)
-        {
-            StripShaderConfig.DisableUnityStrip = val.newValue;
-        }
+
 
 
         private void OnChangeUseSVC(ChangeEvent<bool> val)
@@ -179,39 +158,6 @@ namespace UTJ.ShaderVariantStripping
         private void OnChangeSafeMode(ChangeEvent<bool> val)
         {
             StripShaderConfig.SafeMode = val.newValue;
-        }
-
-        private void SetUIActiveAtEnabled(bool enabled)
-        {
-            strictModeToggle.SetEnabled(enabled);
-            disableUnityStrip.SetEnabled(enabled);
-            orderIntField.SetEnabled(enabled);
-
-            orderIntField.SetEnabled(enabled);
-            executeOrderMinBtn.SetEnabled(enabled);
-            executeOrderMaxBtn.SetEnabled(enabled);
-        }
-
-        private void SetUIActiveAtStrictMode(bool enabled)
-        {
-            disableUnityStrip.SetEnabled(enabled);
-            disableUnityStrip.SetValueWithoutNotify(StripShaderConfig.DisableUnityStrip);
-        }
-
-        private void OnLostFocusIntField(FocusOutEvent evt)
-        {
-            StripShaderConfig.Order = this.orderIntField.value;
-        }
-
-        private void OnClickMinButton()
-        {
-            StripShaderConfig.Order = int.MinValue;
-            this.orderIntField.SetValueWithoutNotify(int.MinValue);
-        }
-        private void OnClickMaxButton()
-        {
-            StripShaderConfig.Order = int.MaxValue;
-            this.orderIntField.SetValueWithoutNotify(int.MaxValue);
         }
 
         #region SVC Rules
