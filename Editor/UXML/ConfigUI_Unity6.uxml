@@ -7,9 +7,9 @@
                     <ui:Toggle label="Log Variant" name="LogEnable" tooltip="Log files are placed under &quot;./ShaderVariants/Builds&quot;" />
                     <ui:Button text="Reset Timestamp" display-tooltip-when-elided="true" name="ResetTimestampBtn" />
                 </ui:VisualElement>
-                <ui:Toggle label="Strict Variant Stripping" name="StrictVariantStripping" tooltip="Strict mode enabled -&gt; remove all variants if the shader is not in ShaderVariantColleciton." />
-                <ui:Toggle label="SafeMode" name="SafeMode" tooltip="Safe Mode enable -&gt; When there are no matches, leave one variant so that the Pass variant is not empty." />
                 <ui:Foldout text="Advanced">
+                    <ui:Toggle label="Strict Variant Stripping" name="StrictVariantStripping" tooltip="Strict mode enabled -&gt; remove all variants if the shader is not in ShaderVariantColleciton." />
+                    <ui:Toggle label="SafeMode" name="SafeMode" tooltip="Safe Mode enable -&gt; When there are no matches, leave one variant so that the Pass variant is not empty." />
                     <ui:Button text="[Debug] List IPreprocessShaders" display-tooltip-when-elided="true" name="DebugListProcessorBtn" style="width: 200px;" />
                     <ui:Button text="[Debug]List ShaderKeywords" parse-escape-sequences="true" display-tooltip-when-elided="true" name="DebugShaderKeywords" style="width: 200px;" />
                 </ui:Foldout>
