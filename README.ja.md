@@ -1,10 +1,15 @@
 # StrippingByVariantCollection
 
-プロジェクト内にあるShaderVariantCollectionを探してきて、登録されていないVariantをビルドから除外します。<br />
+プロジェクト内にあるShaderVariantCollection及びGraphicsStateCollectionを探してきて、登録されていないVariantをビルドから除外します。<br />
 メニューの「UTJ/ShaderVariantStrip」の設定ウィンドウを変更することが出来ます。<br />
 
-## 設定画面について
-![alt text](Documentation~/ConfigWindow.png)
+# Unity 2022までをお使いの場合
+[version 2](https://github.com/wotakuro/StrippingByVariantCollection/tree/version2)をお使いください
+
+
+# 設定画面について
+## Commonタブ
+![alt text](Documentation~/Config_StripCommon.png)
 
 ### Enable Stripping
 Strip処理を行うかどうかを指定します。
@@ -14,26 +19,17 @@ Strip処理を行うかどうかを指定します。
 プロジェクト直下の「ShaderVariants/Builds/タイムスタンプ」ディレクトリ以下に書き出します。<br />
 これはStrippingが無効でもログ書き出しすることが可能です。
 
-## 「Reset Timestamp」ボタン
-連続でビルドする際に、ログのタイムスタンプがうまくリセットされない可能性があったため用意しました。
+### 「Reset Timestamp」ボタン
+連続でビルドする際に、ログのタイムスタンプがうまくリセットされない可能性があったため用意しました。<br />
 連続ビルド時にログのタイムスタンプが上手く更新されないことがあったら押してください。
 
 ### Strict Variant Stripping
-有効になった時は ShaderVariantCollectionにないShaderは全Variant削除を行います。
-無効の場合は、ShaderVariantCollectionにないShaderは特に特別なStrip処理は行いません。
+有効になった時は ShaderVariantCollection/GraphisStateCollectionにないShaderは全Variant削除を行います。<br />
+無効の場合は、ShaderVariantCollection/GraphisStateCollectionにないShaderは特に特別なStrip処理は行いません。
 
-
-### Disable Unity Stripping
-有効にすることで、「UnityEngine.」「Unity.」 以下にある IPreprocessShadersの処理を消します。(Universal RenderPipelineにあるものを無効にするなど出来ます)<br />
-Strict Variant Strippingが有効になっていないと、こちらの機能は使う事が出来ません。<br />
-※IL書き換えによって実現します
-
-### Script Execute Order
-本アセットのIPreprocessShadersのorder(実行順) を指定します。
-
-### IgnoreStageOnlyKeyword
-Vertexシェーダー実行時に、Verexシェーダーでしか使わないキーワードを一致する時に無視します。
-これによって、Variant数が増える事はありますが、余計なStripを阻止することが出来ます。
+### SafeMode
+もしPass内の全てのVariantが削除されてしまうケースに遭遇した場合、最低でも一つはVariantを残すようにします。<br />
+Passが空となってしまうとFallbackされず描画がスキップされてしまうのでオプションを用意しました。
 
 ### [Debug] List IPreprocessShaders
 IPreprocessShadersを実装した全てのクラスを表示します。
@@ -42,12 +38,77 @@ IPreprocessShadersを実装した全てのクラスを表示します。
 ![alt text](Documentation~/ShaderKeywordDebug.png)
 Shaderのキーワードが、どのStageで有効になっているかデバッグするための機能です。
 
+
+## ShaderVariantCollection タブ
+![alt text](Documentation~/Config_StripSVC.png)
+
+### Use ShaderVariantCollection
+無効にすると、プロジェクト内にあるShaderVariantCollectionを考慮しないようになります。
+
 ### Exclude Stripping Rule
 ここで指定されたShaderVariantCollectionアセットは対象外となり、無視します。
 
 
+## GraphicsStateCollection タブ
+![alt text](Documentation~/Config_StripGSC.png)
+
+### UseGraphicsStateCollection
+無効にすると、プロジェクト内にあるGraphicsStateCollectionを考慮しないようになります。
+
+### Match Graphis API Only
+ビルド対象と同じGraphicsAPIで作成されたGraphicsStateCollectionのみを考慮するようにします
+
+### Match Target Platfomr Only
+ビルド対象と同じPlatformで作成されたGraphicsStateCollectionのみを考慮するようにします
+
+### Exclude Stripping Rule
+ここで指定されたGraphicsStateCollectionアセットは対象外となり、無視します。
+
+## Connect Runtimeタブ
+![alt text](Documentation~/Config_Strip_ConnectRuntime.png) <br />
+PlayerSettingsの「Strict shader variant matching 」を有効にしたDevelopmentBuildから、ミスマッチが起きたShaderVariantを収集して、ダミーのGraphicsStateCollectionを作るためのオプションです。
+
+### TargetPlayer
+DevelopmentBuildした対象を指定します。
+
+### Create GraphicsStatesCollection from Miss Match Variant
+このボタンを押すと、Assets/GraphicsStateCollection/MissMatchVarint以下にGraphicsStateCollectionを生成します。
+
+### Recieve GraphicsStateCollection from Player
+このボタンを出すには「STRIP_ENABLE_AUTO_GSC」をDefineに追加する必要があります。<br/ >
+ボタンが押されると、接続中のPlayerが起動後からTraceしているGraphicsStateCollectionをEditorに転送します。<br />
+
+![alt text](Documentation~/PlayerSettings.png) <br />
+
+GraphicsStateCollectionは複数のObjectで同時にTraceすることが出来ないため、Defineによるオプションを導入しています。
+
 <br />
 
-参考：
+# 参考情報
+## Strip処理について
 こちらはスクリプタブルシェーダーバリアントの除去を使っています<br />
 https://blogs.unity3d.com/jp/2018/05/14/stripping-scriptable-shader-variants/
+
+## Strip処理が行われない場合
+Incrementalビルドによって、IPreprocessShaders.OnPorocessShaderが呼び出されないことがあります。<br />
+https://docs.unity3d.com/6000.0/Documentation/Manual/incremental-build-pipeline.html <br />
+<br />
+もしそのような場合はCleanBuildをお試しください
+
+![alt text](Documentation~/CleanBuild.png) <br />
+
+
+## ワークフローの提唱
+GraphicsStateCollectionを構築して、より良いStripをするための提唱です。<br />
+
+<pre>
+1.まず本ツールでのStripを無効化、「STRIP_ENABLE_AUTO_GSC」をDefineしたDevelopmentビルドを作成します
+2.しばらく動かした後、PlayerからGraphicsStateCollectionを取得します。
+3.その後、PlayerSettings.strictShaderVariantMatchingを有効、本ツールを有効化、Common設定のStrictVariantStrippingとSafeModeを有効にしてDevelopmentBuildをします。
+4.ShaderVariantのミスマッチを「Create GraphicsStatesCollection from Miss Match Variant」で収集します。
+
+このような形で、GraphicsStateCollectionを収集して構築していく事がお勧めです。
+最終的なビルドは安全性を考慮して、本ツールのSafeMode,StrictVarinatStrippingを有効化して、PlayerSettings.StrictVariantStrippingを無効化してビルドしていく事です。
+
+※StrictVarinatStrippingを有効にすることで、Fallback先のシェーダーなど実際に使われていないShaderのメモリ使用量を削減することが出来ます。
+</pre>

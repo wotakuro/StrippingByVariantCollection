@@ -1,8 +1,8 @@
 {
   "name": "com.utj.stripvariant",
   "displayName": "ShaderStripVariant",
-  "version": "2.2.0",
-  "unity": "2018.4",
+  "version": "3.0.0",
+  "unity": "6000.0",
   "description": "ShaderStripVariant by ShaderVariantCollection",
   "keywords": [
     "ShaderStripVariant"

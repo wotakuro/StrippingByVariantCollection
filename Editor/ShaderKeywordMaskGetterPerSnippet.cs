@@ -5,6 +5,7 @@ using UnityEditor;
 using UnityEditor.Rendering;
 using System.Text;
 using System.Linq;
+using UTJ.ShaderVariantStripping;
 
 namespace UTJ
 {
@@ -146,8 +147,7 @@ namespace UTJ
         {
             get
             {
-                return this.shader.name.Replace("/", "_") +"-"+ this.snippetData.shaderType + "-" +
-                    this.snippetData.pass.SubshaderIndex + "-" + this.snippetData.pass.PassIndex + ".txt";
+                return ShaderNameUtility.GetShaderNameForPath(shader) + ShaderNameUtility.GetSnipetName(snippetData) + ".txt";
             }
         }
 
@@ -178,7 +178,7 @@ namespace UTJ
         {
             if(validKeywords == null)
             {
-                return true;
+                return false;
             }
             return validKeywords.Contains(keyword);
         }
@@ -186,7 +186,7 @@ namespace UTJ
         {
             if (this.pgTypeOnlyKeyword == null)
             {
-                return true;
+                return false;
             }
             return pgTypeOnlyKeyword.Contains(keyword);
         }
@@ -214,6 +214,33 @@ namespace UTJ
                 {
                     newKeywords[index] = keywords[i];
                     ++index;
+                }
+            }
+            return newKeywords;
+        }
+
+        public List<string> ConvertValidOnlyKeywords(List<string> keywords)
+        {
+            if (keywords == null) { return null; }
+            int validCount = 0;
+            int length = keywords.Count;
+            for (int i = 0; i < length; ++i)
+            {
+                if (ValidKeyword(keywords[i]))
+                {
+                    validCount++;
+                }
+            }
+            if (validCount == length || validCount == 0)
+            {
+                return null;
+            }
+            var newKeywords = new List<string>(validCount);
+            for (int i = 0; i < length; ++i)
+            {
+                if (ValidKeyword(keywords[i]))
+                {
+                    newKeywords.Add(keywords[i]);
                 }
             }
             return newKeywords;

@@ -3,24 +3,35 @@ using UnityEditor;
 using System.IO;
 using System.Collections.Generic;
 using UnityEditor.Callbacks;
-using UTJ.ShaderVariantStripping.CodeGen;
+
+using UnityEngine.Experimental.Rendering;
 
 namespace UTJ.ShaderVariantStripping
 {
     internal class StripShaderConfig
     {
-        private const string ConfigFile = "ShaderVariants/v2_config.txt";
+        private const string ConfigFile = "ShaderVariants/v3_config.txt";
 
         [System.Serializable]
         struct ConfigData {
             public bool enabled;
             public bool logEnabled;
             public bool strictVariantStripping;
-            public bool disableUnityStrip;
+            public bool safeMode;
             public int order;
             public List<string> excludeVariantCollection;
-            public bool ignoreStageOnlyKeyword;
+
+            // from Unity6
+            // Set the default value to False in consideration of migration.
+            public bool disableSVC; // SVC = ShaderVariantCollection;
+            public bool disableGSC;// GSC = GraphicsStateCollection
+
+            public bool matchGSCGraphicsAPI;
+            public bool matchGSCPlatform;
+            public List<string> exlucdeGSC;
+
         }
+
 
         private static ConfigData currentConfig;
 
@@ -29,14 +40,9 @@ namespace UTJ.ShaderVariantStripping
             get { return currentConfig.enabled; }
             set
             {
-                var backupFlag = ShouldRemoveOther;
                 currentConfig.enabled = value;
                 SaveConfigData();
 
-                if( backupFlag != ShouldRemoveOther)
-                {
-                    ReloadCode();
-                }
             }
         }
         public static bool IsLogEnable
@@ -49,93 +55,76 @@ namespace UTJ.ShaderVariantStripping
         }
 
 
-        public static bool IgnoreStageOnlyKeyword
-        {
-            get { return currentConfig.ignoreStageOnlyKeyword; }
-            set
-            {
-                currentConfig.ignoreStageOnlyKeyword = value;
-                SaveConfigData();
-            }
-        }
-
 
         public static bool StrictVariantStripping
         {
             get { return currentConfig.strictVariantStripping; }
             set
             {
-                var backupFlag = ShouldRemoveOther;
 
                 currentConfig.strictVariantStripping = value;
-                if (!value)
-                {
-                    DisableUnityStrip = false;
-                }
                 SaveConfigData();
-                if (backupFlag != ShouldRemoveOther)
-                {
-                    ReloadCode();
-                }
             }
         }
 
-        public static int Order
+
+        // from U6
+        #region UNITY_6
+
+        public static bool SafeMode
         {
             get
             {
-                return currentConfig.order;
+                return currentConfig.safeMode;
             }
             set
             {
-                currentConfig.order = value;
+                currentConfig.safeMode = value;
                 SaveConfigData();
             }
         }
-        public static bool DisableUnityStrip
+
+
+        public static bool UseSVC
         {
-            get
-            {
-                return currentConfig.disableUnityStrip;
-            }
+            get { return !currentConfig.disableSVC; }
             set
             {
-                var backupFlag = ShouldRemoveOther;
-                currentConfig.disableUnityStrip = value;
+                currentConfig.disableSVC = !value;
                 SaveConfigData();
-                if (backupFlag != ShouldRemoveOther)
-                {
-                    ReloadCode();
-                }
             }
         }
-
-        private static bool ShouldRemoveOther
+        public static bool UseGSC
         {
-            get
+            get { return !currentConfig.disableGSC; }
+            set
             {
-                return currentConfig.enabled & currentConfig.strictVariantStripping & currentConfig.disableUnityStrip;
+                currentConfig.disableGSC = !value;
+                SaveConfigData();
             }
         }
-
-        private static void ReloadCode()
+        public static bool MatchGSCGraphicsAPI
         {
-            var targets = RecompileAsmUtility.GetRecompileTarget(true);
-
-            if (targets.Count <= 0)
+            get { return !currentConfig.matchGSCGraphicsAPI; }
+            set
             {
-                return;
+                currentConfig.matchGSCGraphicsAPI = value;
+                SaveConfigData();
             }
-
-            var target = targets[0];            
-            targets.RemoveAt(0);
-            if(targets.Count > 0)
-            {
-                RecompileAsmUtility.WriteFile(RecompileAsmUtility.TempCompileTargetFile, targets);
-            }
-            Debug.Log("Recompiling::" + target.asmName);
-            AssetDatabase.ImportAsset( target.asmDefPath , ImportAssetOptions.ForceUpdate);            
         }
+        public static bool MatchGSCPlatform
+        {
+            get { return !currentConfig.matchGSCPlatform; }
+            set
+            {
+                currentConfig.matchGSCPlatform = value;
+                SaveConfigData();
+            }
+        }
+
+        #endregion UNITY_6
+
+
 
         [InitializeOnLoadMethod]
         public static void Init()
@@ -146,26 +135,15 @@ namespace UTJ.ShaderVariantStripping
                 {
                     enabled = true,
                     strictVariantStripping = false,
-                    disableUnityStrip = false,
+                    disableGSC = false,
+                    disableSVC = false,
                     logEnabled = true,
-                    order = int.MinValue,
+                    order = int.MaxValue,
+                    safeMode = true,
                 };
                 return;
             }
             currentConfig = ReadConfigData();
-            EditorApplication.delayCall += () =>
-            {
-                var targets = RecompileAsmUtility.ReadFromFile(RecompileAsmUtility.TempCompileTargetFile);
-                if (targets.Count <= 0)
-                {
-                    return;
-                }
-                var target = targets[0];
-                targets.RemoveAt(0);
-                RecompileAsmUtility.WriteFile(RecompileAsmUtility.TempCompileTargetFile, targets); 
-                Debug.Log("Recompiling::" + target.asmName);
-                AssetDatabase.ImportAsset(target.asmDefPath, ImportAssetOptions.ForceUpdate);
-            };
         }
 
         private static ConfigData ReadConfigData()
@@ -177,16 +155,28 @@ namespace UTJ.ShaderVariantStripping
 
         private static void SaveConfigData()
         {
+            SaveConfigData(ConfigFile);
+        }
+        internal static void LogConfigData(string path)
+        {
+            if(System.IO.File.Exists(path)){
+                return;
+            }
+            SaveConfigData(path);
+        }
+        private static void SaveConfigData(string path)
+        {
             var str = JsonUtility.ToJson(currentConfig);
-            string dir = Path.GetDirectoryName(ConfigFile);
-            if ( !Directory.Exists(dir))
+            string dir = Path.GetDirectoryName(path);
+            if (!Directory.Exists(dir))
             {
                 Directory.CreateDirectory(dir);
             }
-            File.WriteAllText(ConfigFile, str);
+            File.WriteAllText(path, str);
+
         }
 
-        public static List<ShaderVariantCollection> GetVariantCollectionAsset()
+        public static List<ShaderVariantCollection> GetExcludeVariantCollectionAsset()
         {
             List<ShaderVariantCollection> list = new List<ShaderVariantCollection>();
             if( currentConfig.excludeVariantCollection != null)
@@ -200,7 +190,7 @@ namespace UTJ.ShaderVariantStripping
             return list;
         }
 
-        public static void SetVariantCollection(List<ShaderVariantCollection> list)
+        public static void SetExcludeVariantCollection(List<ShaderVariantCollection> list)
         {
             List<string> paths = new List<string>();
             foreach (var collectionAsset in list)
@@ -215,6 +205,41 @@ namespace UTJ.ShaderVariantStripping
             if(!IsSameList(paths,currentConfig.excludeVariantCollection))
             {
                 currentConfig.excludeVariantCollection = paths;
+                SaveConfigData();
+            }
+        }
+
+
+
+        public static List<GraphicsStateCollection> GetExcludeGSC()
+        {
+            var list = new List<GraphicsStateCollection>();
+            if (currentConfig.exlucdeGSC != null)
+            {
+                foreach (var collectionPath in currentConfig.exlucdeGSC)
+                {
+                    var variantCollectionAsset = AssetDatabase.LoadAssetAtPath<GraphicsStateCollection>(collectionPath);
+                    list.Add(variantCollectionAsset);
+                }
+            }
+            return list;
+        }
+
+        public static void SetExcludeGSC(List<GraphicsStateCollection> list)
+        {
+            List<string> paths = new List<string>();
+            foreach (var collectionAsset in list)
+            {
+                paths.Add(AssetDatabase.GetAssetPath(collectionAsset));
+            }
+            if (currentConfig.exlucdeGSC == null)
+            {
+                currentConfig.exlucdeGSC = new List<string>();
+            }
+
+            if (!IsSameList(paths, currentConfig.exlucdeGSC))
+            {
+                currentConfig.exlucdeGSC = paths;
                 SaveConfigData();
             }
         }

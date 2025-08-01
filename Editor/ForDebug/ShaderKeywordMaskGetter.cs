@@ -14,6 +14,12 @@ namespace UTJ
             public int subShaderIndex;
             public int passIndex;
 
+            public PassInfo(int subShader , int pass)
+            {
+                this.subShaderIndex = subShader;
+                this.passIndex = pass;  
+            }
+
             public int Compare(PassInfo x, PassInfo y)
             {
                 int val = x.subShaderIndex.CompareTo(y.subShaderIndex);
@@ -27,6 +33,12 @@ namespace UTJ
             }
         }
 
+        public class PassDetail
+        {
+            public string passName;
+            public List<string> tags;
+        }
+
         private const int FLAG_VERTEX = 0x01;
         private const int FLAG_FRAGMENT = 0x02;
         private const int FLAG_GEOMETRY = 0x04;
@@ -36,9 +48,12 @@ namespace UTJ
 
         private Shader shader;
         private Dictionary<string, int> keywordFlags;
+
+        private Dictionary<PassInfo, Dictionary<string, int>> keywordFlagPerPass;
+        private Dictionary<PassInfo, PassDetail> passDeitalInfos;
+
         private List<string> keywords;
 
-        private HashSet<PassInfo> passInfos;
 
         public ShaderKeywordMaskGetter(Shader sh)
         {
@@ -56,13 +71,31 @@ namespace UTJ
             }
         }
 
-        public List<PassInfo> GetAllPasses()
+        public List<PassInfo> allPasses
         {
-            var list = new List<PassInfo>();
-            foreach(PassInfo passId in passInfos){
-                list.Add(passId);
+            get
+            {
+                List<PassInfo> allPass = new List<PassInfo>(keywordFlagPerPass.Count);
+                foreach(var key in keywordFlagPerPass.Keys)
+                {
+                    allPass.Add(key);
+                }
+                allPass.Sort((a, b) =>
+                {
+                    return (a.subShaderIndex - b.subShaderIndex) <<16 + (a.passIndex - b.passIndex);
+                });
+                return allPass;
             }
-            return list;
+        }
+
+
+        public PassDetail GetPassDetail(PassInfo passInfo)
+        {
+            PassDetail detail;
+            if(this.passDeitalInfos.TryGetValue(passInfo, out detail) ){
+                return detail;
+            }
+            return null;
         }
 
 
@@ -83,8 +116,9 @@ namespace UTJ
             {
                 return;
             }
-            this.passInfos = new HashSet<PassInfo>();
             this.keywordFlags = new Dictionary<string, int>();
+            this.keywordFlagPerPass = new Dictionary<PassInfo, Dictionary<string, int>>();
+            this.passDeitalInfos = new Dictionary<PassInfo, PassDetail>();
             int arraySize = subShadersProp.arraySize;
             for (int i = 0; i < arraySize; ++i)
             {
@@ -132,6 +166,20 @@ namespace UTJ
         void ExecutePass(SerializedProperty passProp, string pgStage, int flag,
             int subShaderIdx, int passIdx)
         {
+            PassInfo passInfoKey = new PassInfo(subShaderIdx,passIdx);
+            Dictionary<string, int> perPassFlags;
+            if(!keywordFlagPerPass.TryGetValue(passInfoKey, out perPassFlags))
+            {
+                perPassFlags = new Dictionary<string, int>();
+                this.keywordFlagPerPass.Add(passInfoKey, perPassFlags );
+            }
+            PassDetail passDetail;
+            if (!this.passDeitalInfos.TryGetValue(passInfoKey,out passDetail))
+            {
+                passDetail = CreatePassDetail(passProp);
+                this.passDeitalInfos.Add(passInfoKey , passDetail );
+            }
+
             var stageProp = passProp.FindPropertyRelative(pgStage);
             if (stageProp == null) { return; }
             var masksProp = stageProp.FindPropertyRelative("m_SerializedKeywordStateMask");
@@ -155,9 +203,47 @@ namespace UTJ
                 {
                     this.keywordFlags.Add(keywordName, flag);
                 }
+                // add per pass
+                if(perPassFlags.TryGetValue(keywordName,out flags)){
+                    perPassFlags[keywordName] = flags | flag;
+                }
+                else
+                {
+                    perPassFlags.Add(keywordName, flag);
+                }
             }
         }
 
+        public PassDetail CreatePassDetail(SerializedProperty passProp)
+        {
+            PassDetail passDetail = new PassDetail();
+            //"m_State.mName"
+            var nameProp = passProp.FindPropertyRelative("m_State.m_Name");
+            if(nameProp!= null)
+            {
+                passDetail.passName = nameProp.stringValue;
+            }
+
+            var tagsProp = passProp.FindPropertyRelative("m_State.m_Tags.tags");
+            if(tagsProp == null || !tagsProp.isArray)
+            {
+                tagsProp = passProp.FindPropertyRelative("m_Tags.tags");
+            }
+            if (tagsProp != null && tagsProp.isArray)
+            {
+                passDetail.tags = new List<string>(tagsProp.arraySize);
+                for(int i = 0;i < tagsProp.arraySize; ++i)
+                {
+                    var tagProp = tagsProp.GetArrayElementAtIndex(i);
+                    var firstProp = tagProp.FindPropertyRelative("first");
+                    var secondProp = tagProp.FindPropertyRelative("second");
+
+                    string tagStr = firstProp.stringValue +" : " + secondProp.stringValue;
+                    passDetail.tags.Add(tagStr);
+                }
+            }
+            return passDetail;
+        }
         private void DebugKeywords()
         {
             foreach (var keyword in this.keywords)
@@ -176,7 +262,61 @@ namespace UTJ
                 Debug.Log(str);
             }
         }
+        #region GET_FLAGS_PER_PASS
+        public bool IsUsedForVertexProgram(int subPassIdx,int passIdx, string keyword)
+        {
+            PassInfo infokey = new PassInfo(subPassIdx, passIdx);
+            return IsUsedPerPassForProgram(infokey, keyword, FLAG_VERTEX);
+        }
+        public bool IsUsedForFragmentProgram(int subPassIdx, int passIdx, string keyword)
+        {
+            PassInfo infokey = new PassInfo(subPassIdx, passIdx);
+            return IsUsedPerPassForProgram(infokey, keyword, FLAG_FRAGMENT);
+        }
+        public bool IsUsedForGeometryProgram(int subPassIdx, int passIdx, string keyword)
+        {
+            PassInfo infokey = new PassInfo(subPassIdx, passIdx);
+            return IsUsedPerPassForProgram(infokey, keyword, FLAG_GEOMETRY);
+        }
+        public bool IsUsedForHullProgram(int subPassIdx, int passIdx, string keyword)
+        {
+            PassInfo infokey = new PassInfo(subPassIdx, passIdx);
+            return IsUsedPerPassForProgram(infokey, keyword, FLAG_HULL);
+        }
+        public bool IsUsedForDomainProgram(int subPassIdx, int passIdx, string keyword)
+        {
+            PassInfo infokey = new PassInfo(subPassIdx, passIdx);
+            return IsUsedPerPassForProgram(infokey, keyword, FLAG_DOMAIN);
+        }
+        public bool IsUsedForRaytraceProgram(int subPassIdx, int passIdx, string keyword)
+        {
+            PassInfo infokey = new PassInfo(subPassIdx, passIdx);
+            return IsUsedPerPassForProgram(infokey, keyword, FLAG_RAYTRACE);
+        }
 
+        private bool IsUsedPerPassForProgram(PassInfo infokey,string keyword, int flag)
+        {
+            Dictionary<string, int> perPass;
+            if (keywordFlagPerPass == null)
+            {
+                return false;
+            }
+            if ( !this.keywordFlagPerPass.TryGetValue(infokey, out perPass))
+            {
+                return false;
+            }
+            int val;
+            if (perPass == null)
+            {
+                return false;
+            }
+            if (!perPass.TryGetValue(keyword, out val))
+            {
+                return false;
+            }
+            return ((val & flag) == flag);
+        }
+        #endregion
 
         #region GET_FLAGS
         public bool IsUsedForVertexProgram(string keyword)
@@ -208,11 +348,11 @@ namespace UTJ
             int val;
             if (keywordFlags == null)
             {
-                return true;
+                return false;
             }
             if (!keywordFlags.TryGetValue(keyword, out val))
             {
-                return true;
+                return false;
             }
             return ((val & flag) == flag);
         }
