@@ -37,12 +37,6 @@ Enabling this feature will remove the IPreprocessShaders under the "Unity." or "
 If Strict Variant Stripping is not enabled, you cannot use this feature.
 *It's implemented by rewriting IL code.
 
-### Script Execute Order
-Setting the order of "IPreprocessShaders" in this asset.
-
-### [Debug] List IPreprocessShaders
-List the all classes that implments IPreprocessShaders.
-
 ### [Debug]List ShaderKeywords
 ![alt text](Documentation~/ShaderKeywordDebug.png)
 You can debug which Shader keywords are enabled at which Stage.

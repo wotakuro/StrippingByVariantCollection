@@ -39,6 +39,34 @@ namespace UTJ.ShaderVariantStripping
             this.excludeVariantsBuffer = new StringBuilder(1024);
         }
 
+
+        internal void SaveProjectGSCShaders(string debugStr)
+        {
+            if (!StripShaderConfig.IsLogEnable)
+            {
+                return;
+            }
+            string dir = LogDirectory + "/" + dateTimeStr;
+            if (!System.IO.Directory.Exists(dir))
+            {
+                System.IO.Directory.CreateDirectory(dir);
+            }
+            System.IO.File.WriteAllText(dir + "/ProjectGSCShaders.txt", debugStr);
+        }
+        internal void SaveProjectGSCVaraiants(string debugStr)
+        {
+            if (!StripShaderConfig.IsLogEnable)
+            {
+                return;
+            }
+            string dir = LogDirectory + "/" + dateTimeStr;
+            if (!System.IO.Directory.Exists(dir))
+            {
+                System.IO.Directory.CreateDirectory(dir);
+            }
+            System.IO.File.WriteAllText(dir + "/ProjectGSCData.txt", debugStr);
+        }
+
         internal void SaveProjectSVCVaraiants(string debugStr)
         {
             if (!StripShaderConfig.IsLogEnable)

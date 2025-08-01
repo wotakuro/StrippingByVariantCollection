@@ -340,11 +340,11 @@ namespace UTJ.ShaderVariantStripping
             }
         }
         #region DEBUG
-        public void SaveDebugLog()
+        public string GetStateKeyDebugStr()
         {
             var sb = new System.Text.StringBuilder(1024);
 
-            foreach(var kvs in this.stateKeyData)
+            foreach (var kvs in this.stateKeyData)
             {
                 sb.AppendLine("---------------------------");
                 sb.AppendLine(kvs.Key.name);
@@ -356,9 +356,14 @@ namespace UTJ.ShaderVariantStripping
                 }
             }
             System.IO.File.WriteAllText("GSCstateKeyDebug.txt", sb.ToString());
-            sb.Clear();
+            return sb.ToString();
+        }
 
-            foreach(var kvs in this.graphicsStatesVariants)
+        public string GetDebugStr()
+        {
+            var sb = new System.Text.StringBuilder(1024);
+
+            foreach (var kvs in this.graphicsStatesVariants)
             {
                 sb.AppendLine("---------------------------");
                 sb.AppendLine(kvs.Key.name);
@@ -382,9 +387,9 @@ namespace UTJ.ShaderVariantStripping
                     }
                 }
             }
-            System.IO.File.WriteAllText("GSCvariantDebug.txt", sb.ToString());
-
+            return sb.ToString();
         }
+
         private static void AppendStateKeyDate(System.Text.StringBuilder sb,GraphicsStateKeyData state)
         {
 

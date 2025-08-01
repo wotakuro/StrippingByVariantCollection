@@ -64,7 +64,10 @@ namespace UTJ.ShaderVariantStripping
                 passCount = new Dictionary<uint, int>();
                 this.passGpuProgramCount.Add(key, passCount );
             }
-            passCount.Add( snippetData.pass.PassIndex , count);
+            if(!passCount.TryAdd( snippetData.pass.PassIndex , count))
+            {
+                Debug.LogWarning("already " + shader.name +"::" + snippetData.pass.SubshaderIndex +"-"+snippetData.pass.PassIndex);
+            }
         }
 
         public PassIdentifier GetRuntimePassIdentifier(Shader shader, ref ShaderSnippetData snippetData)

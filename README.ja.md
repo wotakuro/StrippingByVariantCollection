@@ -31,14 +31,6 @@ Strip処理を行うかどうかを指定します。
 もしPass内の全てのVariantが削除されてしまうケースに遭遇した場合、最低でも一つはVariantを残すようにします。<br />
 Passが空となってしまうとFallbackされず描画がスキップされてしまうのでオプションを用意しました。
 
-### Disable Unity Stripping
-有効にすることで、「UnityEngine.」「Unity.」 以下にある IPreprocessShadersの処理を消します。(Universal RenderPipelineにあるものを無効にするなど出来ます)<br />
-Strict Variant Strippingが有効になっていないと、こちらの機能は使う事が出来ません。<br />
-※IL書き換えによって実現します
-
-### Script Execute Order
-本アセットのIPreprocessShadersのorder(実行順) を指定します。
-
 ### [Debug] List IPreprocessShaders
 IPreprocessShadersを実装した全てのクラスを表示します。
 

@@ -74,6 +74,8 @@ namespace UTJ.ShaderVariantStripping
             {
                 shaderVariantStripLogger.InitLogInfo();
                 shaderVariantStripLogger.SaveProjectSVCVaraiants(this.projectSVCData.GetDebugStr() );
+                shaderVariantStripLogger.SaveProjectGSCShaders(this.projectGSCData.GetStateKeyDebugStr());
+                shaderVariantStripLogger.SaveProjectGSCVaraiants(this.projectGSCData.GetDebugStr());
                 shaderVariantStripLogger.DumpConfig();
             }
             isInitialized = true;
@@ -187,9 +189,11 @@ namespace UTJ.ShaderVariantStripping
             }
             var gscPassIdentifier = this.runtimePassIndexConverter.GetRuntimePassIdentifier(shader, ref snippet);
 
+            /*
             Debug.Log("Shader " + shader.name + "::" + snippet.shaderType + "  (" +
                 snippet.pass.SubshaderIndex + "-" + snippet.pass.PassIndex + " ) -> (" +
                 gscPassIdentifier.SubshaderIndex +"-" + gscPassIdentifier.PassIndex );
+            */
 
 
             var  variantsHashSet = projectSVCData.GetVariantsHashSet(shader,maskGetter);
