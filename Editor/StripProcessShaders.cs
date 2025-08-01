@@ -44,7 +44,7 @@ namespace UTJ.ShaderVariantStripping
         private List<ProjectGSCData.GraphcisStateRequestCondition> conditionsForPerShader;
 
 
-
+        private RuntimePassIndexConverter runtimePassIndexConverter = new RuntimePassIndexConverter();
 
         private HashSet<ShaderCompilerPlatform> platformsBuffer = new HashSet<ShaderCompilerPlatform>();
 
@@ -69,7 +69,7 @@ namespace UTJ.ShaderVariantStripping
             this.compileResultBuffer = new List<ShaderCompilerData>(1024);
             this.projectSVCData.Initialize();
             this.projectGSCData.Initialize();
-
+            this.runtimePassIndexConverter.Initialize();
             if (StripShaderConfig.IsLogEnable)
             {
                 shaderVariantStripLogger.InitLogInfo();
@@ -123,6 +123,7 @@ namespace UTJ.ShaderVariantStripping
             }
             this.platformsBuffer.Clear();
 
+
             double startTime = EditorApplication.timeSinceStartup;
             int startVariants = shaderCompilerData.Count;
 
@@ -151,7 +152,7 @@ namespace UTJ.ShaderVariantStripping
             this.ConstructGSCConditions(conditionsForPerShader, shaderCompilerData);
 
             foreach (var condition in conditionsForPerShader) {
-                bool flag = this.projectGSCData.IsExistInGSC(shader, ref snippet, condition);
+                bool flag = this.projectGSCData.IsExistInGSC(shader, condition);
                 if (flag)
                 {
                     isExistShaderInGSC = true;
@@ -168,7 +169,7 @@ namespace UTJ.ShaderVariantStripping
                     // safe mode
                     if ( StripShaderConfig.SafeMode )
                     {
-                        this.ExecuteSafeMode(shader, snippet, shaderCompilerData);
+                        this.ExecuteStrictSafeMode(shader, snippet, shaderCompilerData);
                         shaderVariantStripLogger.LogResult(shader, snippet, shaderCompilerData, maskGetter, startTime, startVariants);
                     }
                     else
@@ -181,8 +182,15 @@ namespace UTJ.ShaderVariantStripping
                 {
                     shaderVariantStripLogger.LogAllInVariantColllection(shader, snippet, shaderCompilerData,true);
                 }
+                this.runtimePassIndexConverter.SetExecuteNum(shader, snippet, shaderCompilerData.Count);
                 return;
             }
+            var gscPassIdentifier = this.runtimePassIndexConverter.GetRuntimePassIdentifier(shader, ref snippet);
+
+            Debug.Log("Shader " + shader.name + "::" + snippet.shaderType + "  (" +
+                snippet.pass.SubshaderIndex + "-" + snippet.pass.PassIndex + " ) -> (" +
+                gscPassIdentifier.SubshaderIndex +"-" + gscPassIdentifier.PassIndex );
+
 
             var  variantsHashSet = projectSVCData.GetVariantsHashSet(shader,maskGetter);
             var variantGSCHashSet = projectGSCData.GetVariantsHashSet(shader, maskGetter);
@@ -209,7 +217,7 @@ namespace UTJ.ShaderVariantStripping
                     gcsConditionData.buildTarget = shaderCompilerData[i].buildTarget;
                     gcsConditionData.shaderPlatform = shaderCompilerData[i].shaderCompilerPlatform;
                     bool isExistsVariantInGSC = projectGSCData.IsExistVariantInGSC(shader,
-                        ref snippet, shaderCompilerData[i] , ref gcsConditionData, variantGSCHashSet);
+                        gscPassIdentifier, shaderCompilerData[i] , ref gcsConditionData, variantGSCHashSet);
 
                     isExistVariant |= isExistsVariantInGSC;
                 }
@@ -238,12 +246,13 @@ namespace UTJ.ShaderVariantStripping
             {
                 shaderCompilerData.Add(data);
             }
+            this.runtimePassIndexConverter.SetExecuteNum(shader, snippet, shaderCompilerData.Count);
 
             shaderVariantStripLogger.LogResult(shader, snippet, shaderCompilerData, maskGetter, startTime, startVariants);
         }
 
 
-        private void ExecuteSafeMode(Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> shaderCompilerData)
+        private void ExecuteStrictSafeMode(Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> shaderCompilerData)
         {
             this.platformsBuffer.Clear();
             this.compileResultBuffer.Clear();

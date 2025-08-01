@@ -38,11 +38,10 @@ namespace UTJ.ShaderVariantStripping
                 this.ConstructKeeywordForCheck();
             }
 
-            public void SetupFromCompilerData(Shader shader,
-                ref ShaderSnippetData snippetData,ref ShaderCompilerData compilerData)
+            public void SetupFromCompilerData(Shader shader,PassIdentifier pass,ref ShaderCompilerData compilerData)
             {
                 this.shader = shader;
-                this.passIdentifier = new PassIdentifier(snippetData.pass.SubshaderIndex, snippetData.pass.PassIndex);
+                this.passIdentifier = pass;
                 var keywords = compilerData.shaderKeywordSet.GetShaderKeywords();
                 this.localKeywords = null;
                 if(this.keywordsForCheck == null)
@@ -200,7 +199,6 @@ namespace UTJ.ShaderVariantStripping
         private GraphicsStateVariantDataComparer comparer = new GraphicsStateVariantDataComparer();
 
         internal bool IsExistInGSC(Shader shader, 
-            ref ShaderSnippetData data,
             GraphcisStateRequestCondition condition)
         {
             List<GraphicsStateKeyData> list;
@@ -308,14 +306,14 @@ namespace UTJ.ShaderVariantStripping
 
 
         internal bool IsExistVariantInGSC(
-            Shader shader, ref ShaderSnippetData snippet, ShaderCompilerData data,
+            Shader shader, PassIdentifier pass, ShaderCompilerData data,
              ref GraphcisStateRequestCondition condition,
              HashSet<GraphicsStateVariantData> hashData)
         {
             if (hashData == null) { return false; }
             var originData = new GraphicsStateVariantData();
-            originData.SetupFromCompilerData(shader, ref snippet, ref data);
-            this.checkData.SetupFromCompilerData(shader, ref snippet, ref data);
+            originData.SetupFromCompilerData(shader, pass, ref data);
+            this.checkData.SetupFromCompilerData(shader, pass , ref data);
             GraphicsStateVariantData variantData;
             if (hashData.TryGetValue(checkData, out variantData))
             {
