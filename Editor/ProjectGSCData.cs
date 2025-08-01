@@ -1,6 +1,4 @@
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using Unity.Android.Gradle.Manifest;
 using UnityEditor;
 using UnityEditor.Rendering;
 using UnityEngine;

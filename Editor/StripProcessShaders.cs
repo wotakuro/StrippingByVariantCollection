@@ -26,7 +26,6 @@ using UnityEditor.Rendering;
 using UnityEditor.Build;
 using UnityEngine.Rendering;
 using System.Text;
-using Unity.Android.Gradle.Manifest;
 
 
 namespace UTJ.ShaderVariantStripping
