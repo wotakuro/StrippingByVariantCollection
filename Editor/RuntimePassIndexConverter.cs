@@ -73,6 +73,9 @@ namespace UTJ.ShaderVariantStripping
         public PassIdentifier GetRuntimePassIdentifier(Shader shader, ref ShaderSnippetData snippetData)
         {
             this.SetupList(shader, snippetData );
+            // count GrabPass
+            uint grabPassCount = GetGrabPassCount(shader,ref snippetData);
+
             uint count = 0;
             int length = this.indeciesBuffer.Count;
             for (int i = 0; i < length; i++)
@@ -83,7 +86,31 @@ namespace UTJ.ShaderVariantStripping
                 }
                 ++count;
             }
-            return new PassIdentifier(snippetData.pass.SubshaderIndex ,count);
+            return new PassIdentifier(snippetData.pass.SubshaderIndex , count + grabPassCount );
+        }
+
+        private uint GetGrabPassCount(Shader shader, ref ShaderSnippetData snippetData)
+        {
+            uint count = 0;
+            var passInfo = snippetData.pass;
+            var data = ShaderUtil.GetShaderData(shader);
+            if(data.SubshaderCount <= passInfo.SubshaderIndex)
+            {
+                return 0;
+            }
+            var subShader = data.GetSubshader((int)passInfo.SubshaderIndex);
+            if (subShader != null) {
+                for (int i = 0; i < passInfo.PassIndex && i < subShader.PassCount; ++i)
+                {
+                    var pass = subShader.GetPass(i);
+                    if(pass != null && pass.IsGrabPass )
+                    {
+                        ++count;
+                    }
+                }
+            }
+            return count;
+
         }
 
         private int GetMaxIndex(Shader shader,uint subShaderIndex)
