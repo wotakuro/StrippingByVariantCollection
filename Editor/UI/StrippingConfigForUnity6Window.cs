@@ -4,7 +4,12 @@ using UnityEngine;
 using UnityEditor;
 using UnityEngine.UIElements;
 using UnityEditor.UIElements;
+
+#if UNITY_6000_5_OR_NEWER
+using UnityEngine.Rendering;
+#else
 using UnityEngine.Experimental.Rendering;
+#endif
 
 namespace UTJ.ShaderVariantStripping
 {
