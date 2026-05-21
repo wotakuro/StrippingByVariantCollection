@@ -4,12 +4,12 @@
     "references": [],
     "includePlatforms": [
         "Android",
-        "Editor",
         "EmbeddedLinux",
         "iOS",
         "LinuxStandalone64",
         "CloudRendering",
         "macOSStandalone",
+        "Switch2",
         "Switch",
         "PS4",
         "PS5",

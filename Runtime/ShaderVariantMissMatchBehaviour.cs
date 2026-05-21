@@ -1,4 +1,4 @@
-#if (DEVELOPMENT_BUILD && !STRIP_DIABLE_AUTO_GCS_COLLECTION || true)
+#if (DEBUG && !STRIP_DIABLE_AUTO_GCS_COLLECTION)
 /**
 MIT License
 
@@ -32,6 +32,7 @@ using UnityEngine.Rendering;
 using PlayerConnection = UnityEngine.Networking.PlayerConnection.PlayerConnection;
 
 
+[assembly: UnityEngine.Scripting.AlwaysLinkAssembly]
 namespace UTJ.ShaderVariantStripping.Runtime
 {
 
@@ -242,6 +243,8 @@ namespace UTJ.ShaderVariantStripping.Runtime
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void Create()
         {
+            // Debug for Stripping
+            // Debug.LogError("ShaderVariantMissMatchBehaviour");
             var gmo = new GameObject("CatchShaderNotFoundLog", typeof(ShaderVariantMissMatchBehaviour));
             GameObject.DontDestroyOnLoad(gmo);
         }

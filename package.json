@@ -1,14 +1,11 @@
 {
   "name": "com.utj.stripvariant",
   "displayName": "ShaderStripVariant",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "unity": "6000.0",
   "description": "ShaderStripVariant by ShaderVariantCollection",
   "keywords": [
     "ShaderStripVariant"
   ],
-  "category": "build",
-  "dependencies": {
-    "com.unity.nuget.mono-cecil": "1.10.1"
-  }
+  "category": "build"
 }
